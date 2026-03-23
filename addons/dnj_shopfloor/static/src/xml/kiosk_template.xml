@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="dnj_shopfloor.KioskMain" owl="1">
+        <div class="dnj-kiosk-container" style="padding: 20px; text-align: center; background-color: #f8f9fa; height: 100vh;">
+            <h1>Kiosk Drukarni DNJ</h1>
+            <p>Wybierz maszynę, aby rozpocząć pracę</p>
+            <button class="btn btn-primary btn-lg" style="margin-top: 20px;">START</button>
+        </div>
+    </t>
+</templates>
