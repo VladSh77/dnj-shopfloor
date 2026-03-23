@@ -5,6 +5,10 @@ from odoo.http import request
 class ShopFloorKiosk(http.Controller):
     @http.route("/dnj_shopfloor/get_workcenters", type="json", auth="user")
     def get_workcenters(self):
-        # Шукаємо всі робочі центри в базі даних Odoo
-        workcenters = request.env["mrp.workcenter"].search_read([], ["id", "name"])
+        # Додано sudo() для обходу прав та limit для продуктивності
+        workcenters = (
+            request.env["mrp.workcenter"]
+            .sudo()
+            .search_read(domain=[], fields=["id", "name"], limit=100)
+        )
         return workcenters

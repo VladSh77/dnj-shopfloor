@@ -3,16 +3,24 @@
     <t t-name="dnj_shopfloor.KioskApp" owl="1">
         <div class="o_dnj_kiosk_app d-flex flex-column align-items-center justify-content-center h-100 bg-light p-4">
             <h1 class="mb-5 display-4 fw-bold">Оберіть робочий центр</h1>
+
             <div class="d-flex flex-wrap justify-content-center gap-4">
-                <t t-if="state.workcenters.length === 0">
-                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <t t-if="state.isLoading">
+                    <div class="spinner-border text-primary m-5" role="status" style="width: 4rem; height: 4rem;">
                         <span class="visually-hidden">Завантаження...</span>
                     </div>
                 </t>
+
+                <t t-elif="state.workcenters.length === 0">
+                    <div class="alert alert-warning fs-4 p-4 shadow-sm" role="alert">
+                        Не знайдено жодного робочого центру. Перевірте налаштування в Odoo.
+                    </div>
+                </t>
+
                 <t t-else="">
                     <t t-foreach="state.workcenters" t-as="wc" t-key="wc.id">
-                        <button class="btn btn-primary btn-lg p-5 shadow-sm rounded-4"
-                                style="font-size: 2rem; min-width: 250px;"
+                        <button class="btn btn-primary btn-lg p-5 shadow-sm rounded-4 fs-2 w-100"
+                                style="max-width: 400px;"
                                 t-on-click="() => this.selectWorkcenter(wc.id)">
                             <t t-esc="wc.name"/>
                         </button>

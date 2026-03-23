@@ -9,6 +9,7 @@ export class KioskApp extends Component {
         this.rpc = useService("rpc");
         this.state = useState({
             workcenters: [],
+            isLoading: true, // Додано стан завантаження
         });
 
         onWillStart(async () => {
@@ -18,21 +19,20 @@ export class KioskApp extends Component {
 
     async loadWorkcenters() {
         try {
-            // Звертаємося до нашого Python-контролера
             const result = await this.rpc("/dnj_shopfloor/get_workcenters", {});
             this.state.workcenters = result;
         } catch (error) {
             console.error("Помилка завантаження робочих центрів:", error);
+        } finally {
+            this.state.isLoading = false; // Вимикаємо спінер у будь-якому випадку
         }
     }
 
     selectWorkcenter(id) {
+        // Поки що логуємо, пізніше тут буде виклик дії (action) Odoo
         console.log("Обрано робочий центр з ID:", id);
-        // Тут пізніше додамо перехід до завдань цієї машини
     }
 }
 
 KioskApp.template = "dnj_shopfloor.KioskApp";
-
-// Реєструємо наш компонент як Client Action
 registry.category("actions").add("dnj_shopfloor_kiosk_client_action", KioskApp);

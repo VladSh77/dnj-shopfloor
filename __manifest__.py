@@ -1,6 +1,7 @@
 {
     "name": "DNJ Shop Floor Kiosk",
-    "version": "1.0",
+    "version": "17.0.1.0.0",
+    "author": "DNJ",
     "category": "Manufacturing",
     "summary": "Kiosk interface for shop floor operators",
     "depends": ["base", "mrp", "web"],
@@ -15,5 +16,5 @@
     },
     "installable": True,
     "application": True,
-    "license": "LGPL-3"
+    "license": "LGPL-3",
 }
