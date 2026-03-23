@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_dnj_shopfloor_kiosk" model="ir.actions.client">
+        <field name="name">Shop Floor Kiosk</field>
+        <field name="tag">dnj_shopfloor_kiosk_client_action</field>
+        <field name="target">fullscreen</field>
+    </record>
+
+    <menuitem id="menu_dnj_shopfloor_root"
+              name="DNJ Kiosk"
+              action="action_dnj_shopfloor_kiosk"
+              sequence="10"/>
+</odoo>
