@@ -1,11 +1,14 @@
 {
     "name": "DNJ Shop Floor Kiosk",
-    "version": "17.0.1.0.0",
+    "version": "17.0.2.0.0",
     "category": "Manufacturing",
-    "summary": "Interfejs tabletowy Kiosk dla operatorów maszyn",
+    "summary": "Tablet kiosk for machine operators — PIN login, work queue, test print, timer, logs",
     "author": "Fayna Digital",
-    "depends": ["base", "mrp"],
+    "license": "LGPL-3",
+    "depends": ["base", "mrp", "stock"],
     "data": [
+        "security/ir.model.access.csv",
+        "views/dnj_operator_views.xml",
         "views/kiosk_views.xml",
     ],
     "assets": {

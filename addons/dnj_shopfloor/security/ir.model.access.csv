@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_dnj_operator_user,dnj.operator user,model_dnj_operator,base.group_user,1,0,0,0
+access_dnj_operator_manager,dnj.operator manager,model_dnj_operator,base.group_system,1,1,1,1
+access_dnj_kiosk_session_user,dnj.kiosk.session user,model_dnj_kiosk_session,base.group_user,1,1,1,0
+access_dnj_kiosk_session_manager,dnj.kiosk.session manager,model_dnj_kiosk_session,base.group_system,1,1,1,1
+access_dnj_kiosk_pause_user,dnj.kiosk.pause user,model_dnj_kiosk_pause,base.group_user,1,1,1,0
+access_dnj_kiosk_pause_manager,dnj.kiosk.pause manager,model_dnj_kiosk_pause,base.group_system,1,1,1,1
+access_dnj_workorder_log_user,dnj.workorder.log user,model_dnj_workorder_log,base.group_user,1,0,1,0
+access_dnj_workorder_log_manager,dnj.workorder.log manager,model_dnj_workorder_log,base.group_system,1,1,1,1
