@@ -89,6 +89,14 @@
         <field name="context">{'search_default_active': 1}</field>
     </record>
 
+    <!-- defined here so operator form can reference it -->
+    <record id="action_dnj_kiosk_session_by_operator" model="ir.actions.act_window">
+        <field name="name">Sessions</field>
+        <field name="res_model">dnj.kiosk.session</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('operator_id', '=', active_id)]</field>
+    </record>
+
     <!-- ══════════════════════════════════════════════════════════════════
          dnj.kiosk.session
     ══════════════════════════════════════════════════════════════════════ -->
@@ -184,13 +192,6 @@
         <field name="name">Kiosk Sessions</field>
         <field name="res_model">dnj.kiosk.session</field>
         <field name="view_mode">tree,form</field>
-    </record>
-
-    <record id="action_dnj_kiosk_session_by_operator" model="ir.actions.act_window">
-        <field name="name">Sessions</field>
-        <field name="res_model">dnj.kiosk.session</field>
-        <field name="view_mode">tree,form</field>
-        <field name="domain">[('operator_id', '=', active_id)]</field>
     </record>
 
     <!-- ══════════════════════════════════════════════════════════════════
