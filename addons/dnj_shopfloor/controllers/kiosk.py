@@ -1,4 +1,5 @@
 import logging
+import werkzeug
 
 from odoo import http
 from odoo.http import request
@@ -28,8 +29,8 @@ class DnjKioskController(http.Controller):
     @http.route('/dnj_shopfloor/session/open', type='json', auth='user')
     def session_open(self, operator_id: int, workcenter_id: int):
         """Open a new kiosk session for the authenticated operator."""
-        env = request.env.sudo()
-        old = env['dnj.kiosk.session'].search([
+        Session = request.env['dnj.kiosk.session'].sudo()
+        old = Session.search([
             ('operator_id', '=', operator_id),
             ('workcenter_id', '=', workcenter_id),
             ('state', 'not in', ['done']),
@@ -37,7 +38,7 @@ class DnjKioskController(http.Controller):
         for s in old:
             s.action_logout()
 
-        session = env['dnj.kiosk.session'].create({
+        session = Session.create({
             'operator_id': operator_id,
             'workcenter_id': workcenter_id,
         })

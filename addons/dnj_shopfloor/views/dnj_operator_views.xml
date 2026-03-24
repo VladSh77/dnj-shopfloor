@@ -218,6 +218,12 @@
               name="DNJ Shopfloor"
               sequence="10"/>
 
+    <menuitem id="menu_dnj_shopfloor_dashboard"
+              name="Dashboard"
+              parent="menu_dnj_shopfloor_root"
+              action="action_dnj_shopfloor_dashboard"
+              sequence="5"/>
+
     <menuitem id="menu_dnj_shopfloor_kiosk"
               name="Kiosk"
               parent="menu_dnj_shopfloor_root"

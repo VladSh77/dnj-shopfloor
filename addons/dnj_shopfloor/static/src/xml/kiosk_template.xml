@@ -35,7 +35,7 @@
             <!-- breadcrumb -->
             <t t-if="state.workcenter">
                 <span style="color:#555540;">›</span>
-                <span class="fw-semibold mx-2" style="color:#E8E6D0;" t-esc="state.workcenter.name"/>
+                <span class="fw-semibold mx-2" style="color:#E8E6D0;" t-esc="state.workcenter ? state.workcenter.name : ''"/>
             </t>
             <t t-if="state.operator">
                 <span style="color:#555540;">›</span>
@@ -163,7 +163,7 @@
         <!-- Machine name + prompt -->
         <div class="text-center">
             <div style="color:#C9A227;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.3rem;"
-                 t-esc="props.workcenter.name"/>
+                 t-esc="props.workcenter ? props.workcenter.name : ''"/>
             <div class="fw-semibold" style="font-size:1.25rem;color:#E8E6D0;">
                 Wprowadź PIN operatora
             </div>
