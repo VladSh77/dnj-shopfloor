@@ -5,7 +5,7 @@ Edit these values before deploying.
 
 # ── Odoo connection ───────────────────────────────────────────────────────────
 ODOO_URL      = "https://dnj.fayna.agency"
-ODOO_DB       = "odoo"
+ODOO_DB       = "dnj_demo"
 ODOO_LOGIN    = "kiosk"
 ODOO_PASSWORD = "Kiosk2024"
 
