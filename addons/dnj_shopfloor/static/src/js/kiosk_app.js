@@ -38,7 +38,7 @@ class PinScreen extends Component {
         this.state = useState({ pin: "", error: "", loading: false });
     }
 
-    onKey(key) {
+    onKey = (key) => {
         if (this.state.loading) return;
         if (key === "⌫") {
             this.state.pin = this.state.pin.slice(0, -1);
