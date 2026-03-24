@@ -284,21 +284,21 @@
                         <group>
                             <field name="modbus_enabled"/>
                             <field name="modbus_port"
-                                   attrs="{'invisible': [('modbus_enabled','=',False)]}"/>
+                                   invisible="not modbus_enabled"/>
                         </group>
                     </group>
                     <group string="Notes">
                         <field name="notes" nolabel="1"
                                placeholder="Machine model, Modbus register map, contact person…"/>
                     </group>
-                    <group string="Live Status" attrs="{'invisible': [('ip_address','=',False)]}">
+                    <group string="Live Status" invisible="not ip_address">
                         <group>
                             <field name="online" readonly="1"/>
                             <field name="response_ms" readonly="1" string="Ping (ms)"/>
                             <field name="last_check" readonly="1"/>
                             <field name="last_online" readonly="1"/>
                         </group>
-                        <group attrs="{'invisible': [('modbus_enabled','=',False)]}">
+                        <group invisible="not modbus_enabled">
                             <field name="machine_running" readonly="1"/>
                             <field name="machine_speed" readonly="1"/>
                             <field name="machine_counter" readonly="1"/>
