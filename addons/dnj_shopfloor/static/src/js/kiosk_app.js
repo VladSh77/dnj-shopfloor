@@ -173,9 +173,19 @@ class WorkScreen extends Component {
     fmtTimer(sec) { return fmtTime(sec); }
 
     get progressPct() { return progress(this.props.workorder.qty_produced, this.props.workorder.qty_production); }
-    get progressCls() {
-        const p = this.progressPct;
-        return p >= 90 ? "bg-success" : p >= 60 ? "bg-warning" : "bg-danger";
+
+    // ── time bar ──────────────────────────────────────────────────────────────
+    get plannedSec()   { return (this.props.workorder.duration_expected || 0) * 60; }
+    get timePct()      { return this.plannedSec ? Math.round((this.props.timerSec / this.plannedSec) * 100) : 0; }
+    get timeBarWidth() { return Math.min(100, this.timePct); }
+    get isOvertime()   { return this.plannedSec > 0 && this.props.timerSec > this.plannedSec; }
+    get overtimeSec()  { return Math.max(0, this.props.timerSec - this.plannedSec); }
+    get timeBarColor() {
+        const p = this.timePct;
+        if (p > 100) return '#c03030';
+        if (p > 95)  return '#e06020';
+        if (p > 80)  return '#C9A227';
+        return '#2D5C2D';
     }
 
     onStop() { this.props.onStop(this.finish.qty, this.finish.scrap); }

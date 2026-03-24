@@ -38,6 +38,7 @@ class MachineCard extends Component {
     static props    = ["wc", "tick"];   // tick forces re-render every second
 
     get sess()       { return this.props.wc.session; }
+    fmtTime(sec)    { return fmtTime(sec); }
     get isActive()   { return this.sess && this.sess.state === 'progress'; }
     get isPaused()   { return this.sess && this.sess.state === 'paused'; }
     get isIdle()     { return !this.sess || ['active','confirmed','test_print'].includes(this.sess.state); }
@@ -72,6 +73,20 @@ class MachineCard extends Component {
     get barColor() {
         const p = this.progressPct;
         return p >= 90 ? '#C9A227' : p >= 60 ? '#2D5C2D' : '#1e3050';
+    }
+
+    // ── time bar ──────────────────────────────────────────────────────────────
+    get plannedSec()   { return (this.sess?.duration_expected || 0) * 60; }
+    get timePct()      { return this.plannedSec ? Math.round((this.timerSec / this.plannedSec) * 100) : 0; }
+    get timeBarWidth() { return Math.min(100, this.timePct); }
+    get isOvertime()   { return this.plannedSec > 0 && this.timerSec > this.plannedSec; }
+    get overtimeSec()  { return Math.max(0, this.timerSec - this.plannedSec); }
+    get timeBarColor() {
+        const p = this.timePct;
+        if (p > 100) return '#c03030';
+        if (p > 95)  return '#e06020';
+        if (p > 80)  return '#C9A227';
+        return '#2D5C2D';
     }
 }
 

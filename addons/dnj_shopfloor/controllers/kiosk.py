@@ -106,7 +106,7 @@ class DnjKioskController(http.Controller):
                 ('state', 'in', ['pending', 'waiting', 'ready', 'progress']),
             ],
             fields=['id', 'name', 'state', 'production_id', 'product_id',
-                    'qty_production', 'qty_produced', 'date_start'],
+                    'qty_production', 'qty_produced', 'date_start', 'duration_expected'],
             order='date_start asc',
             limit=50,
         )
@@ -191,11 +191,12 @@ class DnjKioskController(http.Controller):
                     'operator':       session.operator_id.name,
                     'workorder':      wo.name if wo else '',
                     'product':        wo.product_id.display_name if wo and wo.product_id else '',
-                    'qty_produced':   session.qty_produced,
-                    'qty_scrap':      session.qty_scrap,
-                    'qty_production': wo.qty_production if wo else 0,
-                    'work_start':     session.work_start_time.isoformat() if session.work_start_time else None,
-                    'pause_minutes':  pause_min,
+                    'qty_produced':      session.qty_produced,
+                    'qty_scrap':         session.qty_scrap,
+                    'qty_production':    wo.qty_production if wo else 0,
+                    'duration_expected': wo.duration_expected if wo else 0,
+                    'work_start':        session.work_start_time.isoformat() if session.work_start_time else None,
+                    'pause_minutes':     pause_min,
                 }
             result.append({
                 'id':      wc.id,
