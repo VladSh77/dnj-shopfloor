@@ -1,0 +1,9 @@
+services:
+  machine-bridge:
+    build: .
+    restart: unless-stopped
+    # NET_RAW capability is required for ICMP ping
+    cap_add:
+      - NET_RAW
+    environment:
+      - PYTHONUNBUFFERED=1

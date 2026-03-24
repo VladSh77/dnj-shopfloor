@@ -1,7 +1,7 @@
 import logging
 import werkzeug
 
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
@@ -166,6 +166,38 @@ class DnjKioskController(http.Controller):
             headers=[('Content-Type', 'text/html; charset=utf-8')]
         )
 
+    # ── machine bridge heartbeat ───────────────────────────────────────────────
+
+    @http.route('/dnj_shopfloor/machine/heartbeat', type='json', auth='user')
+    def machine_heartbeat(self, machines: list):
+        """
+        Called by the machine_bridge service every N seconds.
+        machines: [{workcenter_id, online, response_ms, ip_address}]
+        Creates or updates dnj.machine.status records.
+        """
+        now = fields.Datetime.now()
+        Status = request.env['dnj.machine.status'].sudo()
+        for m in machines:
+            wc_id = m.get('workcenter_id')
+            if not wc_id:
+                continue
+            online = bool(m.get('online'))
+            rec = Status.search([('workcenter_id', '=', wc_id)], limit=1)
+            vals = {
+                'online':      online,
+                'response_ms': int(m.get('response_ms') or 0),
+                'ip_address':  m.get('ip_address', ''),
+                'last_check':  now,
+            }
+            if online:
+                vals['last_online'] = now
+            if rec:
+                rec.write(vals)
+            else:
+                vals['workcenter_id'] = wc_id
+                Status.create(vals)
+        return {'ok': True, 'updated': len(machines)}
+
     # ── manager dashboard data ─────────────────────────────────────────────────
 
     @http.route('/dnj_shopfloor/dashboard', type='json', auth='user')
@@ -174,6 +206,12 @@ class DnjKioskController(http.Controller):
         env = request.env
         workcenters = env['mrp.workcenter'].sudo().search(
             [('active', '=', True)], order='name')
+        # Pre-load all machine statuses in one query
+        statuses = {
+            s.workcenter_id.id: s
+            for s in env['dnj.machine.status'].sudo().search([])
+        }
+
         result = []
         for wc in workcenters:
             session = env['dnj.kiosk.session'].sudo().search([
@@ -198,10 +236,20 @@ class DnjKioskController(http.Controller):
                     'work_start':        session.work_start_time.isoformat() if session.work_start_time else None,
                     'pause_minutes':     pause_min,
                 }
+
+            ms = statuses.get(wc.id)
+            machine_status = {
+                'monitored': bool(ms),
+                'online':      ms.online if ms else None,
+                'response_ms': ms.response_ms if ms else None,
+                'last_check':  ms.last_check.isoformat() if ms and ms.last_check else None,
+            }
+
             result.append({
-                'id':      wc.id,
-                'name':    wc.name,
-                'code':    wc.code or '',
-                'session': sess_data,
+                'id':             wc.id,
+                'name':           wc.name,
+                'code':           wc.code or '',
+                'session':        sess_data,
+                'machine_status': machine_status,
             })
         return result

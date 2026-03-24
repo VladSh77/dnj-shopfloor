@@ -7,3 +7,5 @@ access_dnj_kiosk_pause_user,dnj.kiosk.pause user,model_dnj_kiosk_pause,base.grou
 access_dnj_kiosk_pause_manager,dnj.kiosk.pause manager,model_dnj_kiosk_pause,base.group_system,1,1,1,1
 access_dnj_workorder_log_user,dnj.workorder.log user,model_dnj_workorder_log,base.group_user,1,0,1,0
 access_dnj_workorder_log_manager,dnj.workorder.log manager,model_dnj_workorder_log,base.group_system,1,1,1,1
+access_dnj_machine_status_user,dnj.machine.status user,model_dnj_machine_status,base.group_user,1,1,1,0
+access_dnj_machine_status_manager,dnj.machine.status manager,model_dnj_machine_status,base.group_system,1,1,1,1

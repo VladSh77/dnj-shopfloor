@@ -1,0 +1,1 @@
+# No third-party deps — uses only Python stdlib (urllib, subprocess, json)

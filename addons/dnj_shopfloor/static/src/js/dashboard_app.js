@@ -38,10 +38,21 @@ class MachineCard extends Component {
     static props    = ["wc", "tick"];   // tick forces re-render every second
 
     get sess()       { return this.props.wc.session; }
+    get ms()         { return this.props.wc.machine_status; }
     fmtTime(sec)    { return fmtTime(sec); }
     get isActive()   { return this.sess && this.sess.state === 'progress'; }
     get isPaused()   { return this.sess && this.sess.state === 'paused'; }
     get isIdle()     { return !this.sess || ['active','confirmed','test_print'].includes(this.sess.state); }
+
+    // machine network status
+    get isMonitored()  { return this.ms && this.ms.monitored; }
+    get isOnline()     { return this.ms && this.ms.online === true; }
+    get isOffline()    { return this.ms && this.ms.monitored && this.ms.online === false; }
+    get pingLabel()    {
+        if (!this.isMonitored) return '';
+        if (this.isOnline) return `${this.ms.response_ms}ms`;
+        return 'offline';
+    }
 
     get statusLabel() {
         if (!this.sess) return "Wolna";

@@ -73,16 +73,27 @@
         <!-- Machine name bar -->
         <div class="d-flex align-items-center justify-content-between px-3 py-2"
              t-attf-style="background:#{statusColor};border-bottom:1px solid #333320;">
-            <div>
+            <div class="d-flex align-items-center gap-2">
+                <!-- network ping dot -->
+                <t t-if="isMonitored">
+                    <span t-attf-style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#{isOnline ? '#60c060' : '#c03030'};box-shadow:0 0 #{isOnline ? '6px #60c060' : '4px #c03030'};"
+                          t-att-title="pingLabel"/>
+                </t>
                 <span class="fw-bold" style="font-size:1rem;" t-esc="props.wc.name"/>
                 <t t-if="props.wc.code">
-                    <span class="ms-2" style="font-size:.72rem;color:#C9A227;letter-spacing:.1em;"
+                    <span style="font-size:.72rem;color:#C9A227;letter-spacing:.1em;"
                           t-esc="props.wc.code"/>
                 </t>
             </div>
-            <span class="badge px-3 py-1 fw-semibold"
-                  t-attf-style="background:rgba(0,0,0,.3);color:#{statusTextColor};font-size:.78rem;border-radius:8px;"
-                  t-esc="statusLabel"/>
+            <div class="d-flex align-items-center gap-2">
+                <t t-if="isMonitored">
+                    <span t-attf-style="font-size:.68rem;color:#{isOnline ? '#3a8a3a' : '#883030'};"
+                          t-esc="pingLabel"/>
+                </t>
+                <span class="badge px-3 py-1 fw-semibold"
+                      t-attf-style="background:rgba(0,0,0,.3);color:#{statusTextColor};font-size:.78rem;border-radius:8px;"
+                      t-esc="statusLabel"/>
+            </div>
         </div>
 
         <!-- Body -->
