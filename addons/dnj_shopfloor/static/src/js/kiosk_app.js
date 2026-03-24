@@ -10,7 +10,6 @@
 import { registry } from "@web/core/registry";
 import { Component, useState, onWillUnmount, useRef, onMounted } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
-import { rpc } from "@web/core/network/rpc";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -35,6 +34,7 @@ class PinScreen extends Component {
     static props = ["workcenter", "onAuth", "onBack"];
 
     setup() {
+        this.rpc = useService("rpc");
         this.state = useState({ pin: "", error: "", loading: false });
     }
 
@@ -56,7 +56,7 @@ class PinScreen extends Component {
         if (this.state.pin.length < 4) return;
         this.state.loading = true;
         try {
-            const result = await rpc('/dnj_shopfloor/authenticate', {
+            const result = await this.rpc('/dnj_shopfloor/authenticate', {
                 pin: this.state.pin,
                 workcenter_id: this.props.workcenter.id,
             });
@@ -180,6 +180,7 @@ export class DnjShopfloorKiosk extends Component {
 
     setup() {
         this.notification = useService("notification");
+        this.rpc = useService("rpc");
         this.state = useState({
             screen: "machine",      // machine | pin | queue | test_print | work
             workcenters: [],
@@ -208,7 +209,7 @@ export class DnjShopfloorKiosk extends Component {
     async _loadWorkcenters() {
         this.state.loading = true;
         try {
-            const rows = await rpc('/web/dataset/call_kw', {
+            const rows = await this.rpc('/web/dataset/call_kw', {
                 model: 'mrp.workcenter',
                 method: 'search_read',
                 args: [[['active', '=', true]]],
@@ -222,7 +223,7 @@ export class DnjShopfloorKiosk extends Component {
     async _loadWorkorders() {
         this.state.loading = true;
         try {
-            this.state.workorders = await rpc('/dnj_shopfloor/workorders', {
+            this.state.workorders = await this.rpc('/dnj_shopfloor/workorders', {
                 workcenter_id: this.state.workcenter.id,
             });
         } catch { this._err("Błąd ładowania zleceń"); }
@@ -240,7 +241,7 @@ export class DnjShopfloorKiosk extends Component {
         this.state.operator = operator;
         this.state.saving = true;
         try {
-            const res = await rpc('/dnj_shopfloor/session/open', {
+            const res = await this.rpc('/dnj_shopfloor/session/open', {
                 operator_id: operator.id,
                 workcenter_id: this.state.workcenter.id,
             });
@@ -353,7 +354,7 @@ export class DnjShopfloorKiosk extends Component {
     // ── helpers ───────────────────────────────────────────────────────────────
 
     async _sessionAction(action, kwargs = {}) {
-        const res = await rpc('/dnj_shopfloor/session/action', {
+        const res = await this.rpc('/dnj_shopfloor/session/action', {
             session_id: this.state.sessionId,
             action,
             ...kwargs,
