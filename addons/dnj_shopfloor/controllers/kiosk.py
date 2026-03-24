@@ -105,8 +105,8 @@ class DnjKioskController(http.Controller):
                 ('state', 'in', ['pending', 'waiting', 'ready', 'progress']),
             ],
             fields=['id', 'name', 'state', 'production_id', 'product_id',
-                    'qty_production', 'qty_produced', 'date_planned_start'],
-            order='date_planned_start asc',
+                    'qty_production', 'qty_produced', 'date_start'],
+            order='date_start asc',
             limit=50,
         )
         return rows

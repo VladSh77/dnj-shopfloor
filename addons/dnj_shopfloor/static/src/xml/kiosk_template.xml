@@ -267,9 +267,9 @@
                                      t-attf-style="width:#{progressPct(wo)}%;height:100%;background:#C9A227;border-radius:3px;"/>
                             </div>
                         </div>
-                        <t t-if="wo.date_planned_start">
+                        <t t-if="wo.date_start">
                             <span style="font-size:.72rem;color:#888870;"
-                                  t-esc="new Date(wo.date_planned_start).toLocaleString('pl-PL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})"/>
+                                  t-esc="new Date(wo.date_start).toLocaleString('pl-PL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})"/>
                         </t>
                     </div>
                 </div>
