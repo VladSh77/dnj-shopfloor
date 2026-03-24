@@ -398,47 +398,42 @@
                 </div>
             </t>
 
-            <!-- Action buttons -->
-            <div class="d-flex gap-3 justify-content-center">
+            <!-- Action buttons — large touch targets for factory floor -->
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
 
                 <!-- START -->
                 <t t-if="props.sessionState === 'confirmed'">
-                    <button class="btn btn-lg px-5"
-                            style="background:#2D5C2D;color:#fff;border:none;border-radius:14px;font-size:1.1rem;"
+                    <button style="min-width:220px;height:90px;font-size:1.5rem;font-weight:700;background:#2D5C2D;color:#fff;border:none;border-radius:18px;letter-spacing:.05em;touch-action:manipulation;"
                             t-att-disabled="props.saving"
                             t-on-click="props.onStart">
-                        <t t-if="props.saving"><span class="spinner-border spinner-border-sm me-2"/></t>
+                        <t t-if="props.saving"><span class="spinner-border me-2"/></t>
                         ▶ START
                     </button>
                 </t>
 
                 <!-- PAUSE + STOP during work -->
                 <t t-if="props.sessionState === 'progress'">
-                    <button class="btn btn-lg px-4"
-                            style="background:#4A3A00;color:#C9A227;border:1px solid #6A5A00;border-radius:14px;"
+                    <button style="min-width:180px;height:90px;font-size:1.4rem;font-weight:700;background:#4A3A00;color:#C9A227;border:2px solid #7A6000;border-radius:18px;touch-action:manipulation;"
                             t-att-disabled="props.saving"
                             t-on-click="props.onPause">
                         ⏸ Pauza
                     </button>
-                    <button class="btn btn-lg px-4"
-                            style="background:#4A1A1A;color:#e08080;border:1px solid #6A2A2A;border-radius:14px;"
+                    <button style="min-width:180px;height:90px;font-size:1.4rem;font-weight:700;background:#4A1A1A;color:#ff8080;border:2px solid #7A2A2A;border-radius:18px;touch-action:manipulation;"
                             t-att-disabled="props.saving"
                             t-on-click="onStop">
-                        <t t-if="props.saving"><span class="spinner-border spinner-border-sm me-2"/></t>
+                        <t t-if="props.saving"><span class="spinner-border me-2"/></t>
                         ■ STOP
                     </button>
                 </t>
 
                 <!-- RESUME + STOP during pause -->
                 <t t-if="props.sessionState === 'paused'">
-                    <button class="btn btn-lg px-4"
-                            style="background:#2D5C2D;color:#fff;border:none;border-radius:14px;"
+                    <button style="min-width:180px;height:90px;font-size:1.4rem;font-weight:700;background:#2D5C2D;color:#fff;border:none;border-radius:18px;touch-action:manipulation;"
                             t-att-disabled="props.saving"
                             t-on-click="props.onResume">
                         ▶ Wznów
                     </button>
-                    <button class="btn btn-lg px-4"
-                            style="background:#4A1A1A;color:#e08080;border:1px solid #6A2A2A;border-radius:14px;"
+                    <button style="min-width:180px;height:90px;font-size:1.4rem;font-weight:700;background:#4A1A1A;color:#ff8080;border:2px solid #7A2A2A;border-radius:18px;touch-action:manipulation;"
                             t-att-disabled="props.saving"
                             t-on-click="onStop">
                         ■ STOP
