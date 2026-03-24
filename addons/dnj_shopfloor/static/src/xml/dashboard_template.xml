@@ -179,6 +179,25 @@
                     </div>
                 </t>
 
+                <!-- Modbus live data -->
+                <t t-if="hasModbus and isOnline">
+                    <div class="d-flex gap-2 mb-2" style="font-size:.78rem;">
+                        <span t-attf-style="background:#{machineRunning ? '#1e4020' : '#2a1a00'};color:#{machineRunning ? '#60c060' : '#C9A227'};border-radius:6px;padding:2px 8px;">
+                            <t t-esc="machineRunning ? '▶ Running' : '■ Stopped'"/>
+                        </span>
+                        <t t-if="machineSpeed">
+                            <span style="background:#1a1a2e;color:#9090b0;border-radius:6px;padding:2px 8px;">
+                                <t t-esc="machineSpeed"/> sh/h
+                            </span>
+                        </t>
+                        <t t-if="machineCounter">
+                            <span style="background:#1a1a2e;color:#9090b0;border-radius:6px;padding:2px 8px;">
+                                Σ <t t-esc="machineCounter"/>
+                            </span>
+                        </t>
+                    </div>
+                </t>
+
                 <!-- Scrap -->
                 <t t-if="sess.qty_scrap">
                     <div style="font-size:.8rem;color:#e08080;">

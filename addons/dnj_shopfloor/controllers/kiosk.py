@@ -166,14 +166,35 @@ class DnjKioskController(http.Controller):
             headers=[('Content-Type', 'text/html; charset=utf-8')]
         )
 
-    # ── machine bridge heartbeat ───────────────────────────────────────────────
+    # ── machine bridge config + heartbeat ─────────────────────────────────────
+
+    @http.route('/dnj_shopfloor/machine/config', type='json', auth='user')
+    def machine_config(self):
+        """
+        Bridge calls this at startup to get the list of machines to monitor.
+        Returns only records that have an IP address configured.
+        """
+        records = request.env['dnj.machine.status'].sudo().search(
+            [('ip_address', '!=', False), ('ip_address', '!=', '')]
+        )
+        return [
+            {
+                'workcenter_id':  r.workcenter_id.id,
+                'name':           r.workcenter_id.name,
+                'ip_address':     r.ip_address,
+                'modbus_enabled': r.modbus_enabled,
+                'modbus_port':    r.modbus_port,
+            }
+            for r in records
+        ]
 
     @http.route('/dnj_shopfloor/machine/heartbeat', type='json', auth='user')
     def machine_heartbeat(self, machines: list):
         """
         Called by the machine_bridge service every N seconds.
-        machines: [{workcenter_id, online, response_ms, ip_address}]
-        Creates or updates dnj.machine.status records.
+        machines: [{workcenter_id, online, response_ms,
+                    machine_running, machine_speed, machine_counter}]
+        Only updates live-status fields — never overwrites admin-set IP.
         """
         now = fields.Datetime.now()
         Status = request.env['dnj.machine.status'].sudo()
@@ -183,19 +204,19 @@ class DnjKioskController(http.Controller):
                 continue
             online = bool(m.get('online'))
             rec = Status.search([('workcenter_id', '=', wc_id)], limit=1)
+            if not rec:
+                continue   # only update existing records (admin must create them)
             vals = {
-                'online':      online,
-                'response_ms': int(m.get('response_ms') or 0),
-                'ip_address':  m.get('ip_address', ''),
-                'last_check':  now,
+                'online':           online,
+                'response_ms':      int(m.get('response_ms') or 0),
+                'last_check':       now,
+                'machine_running':  bool(m.get('machine_running')),
+                'machine_speed':    int(m.get('machine_speed') or 0),
+                'machine_counter':  int(m.get('machine_counter') or 0),
             }
             if online:
                 vals['last_online'] = now
-            if rec:
-                rec.write(vals)
-            else:
-                vals['workcenter_id'] = wc_id
-                Status.create(vals)
+            rec.write(vals)
         return {'ok': True, 'updated': len(machines)}
 
     # ── manager dashboard data ─────────────────────────────────────────────────
@@ -239,10 +260,14 @@ class DnjKioskController(http.Controller):
 
             ms = statuses.get(wc.id)
             machine_status = {
-                'monitored': bool(ms),
-                'online':      ms.online if ms else None,
-                'response_ms': ms.response_ms if ms else None,
-                'last_check':  ms.last_check.isoformat() if ms and ms.last_check else None,
+                'monitored':       bool(ms),
+                'online':          ms.online if ms else None,
+                'response_ms':     ms.response_ms if ms else None,
+                'last_check':      ms.last_check.isoformat() if ms and ms.last_check else None,
+                'machine_running': ms.machine_running if ms else False,
+                'machine_speed':   ms.machine_speed if ms else 0,
+                'machine_counter': ms.machine_counter if ms else 0,
+                'modbus_enabled':  ms.modbus_enabled if ms else False,
             }
 
             result.append({

@@ -44,15 +44,19 @@ class MachineCard extends Component {
     get isPaused()   { return this.sess && this.sess.state === 'paused'; }
     get isIdle()     { return !this.sess || ['active','confirmed','test_print'].includes(this.sess.state); }
 
-    // machine network status
-    get isMonitored()  { return this.ms && this.ms.monitored; }
-    get isOnline()     { return this.ms && this.ms.online === true; }
-    get isOffline()    { return this.ms && this.ms.monitored && this.ms.online === false; }
-    get pingLabel()    {
+    // machine network / modbus status
+    get isMonitored()    { return this.ms && this.ms.monitored; }
+    get isOnline()       { return this.ms && this.ms.online === true; }
+    get isOffline()      { return this.ms && this.ms.monitored && this.ms.online === false; }
+    get hasModbus()      { return this.ms && this.ms.modbus_enabled; }
+    get pingLabel() {
         if (!this.isMonitored) return '';
         if (this.isOnline) return `${this.ms.response_ms}ms`;
         return 'offline';
     }
+    get machineSpeed()   { return this.ms ? this.ms.machine_speed : 0; }
+    get machineCounter() { return this.ms ? this.ms.machine_counter : 0; }
+    get machineRunning() { return this.ms ? this.ms.machine_running : false; }
 
     get statusLabel() {
         if (!this.sess) return "Wolna";

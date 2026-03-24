@@ -249,4 +249,82 @@
               action="action_dnj_operator"
               sequence="10"/>
 
+    <menuitem id="menu_dnj_machine_monitoring"
+              name="Machine Monitoring"
+              parent="menu_dnj_shopfloor_config"
+              action="action_dnj_machine_status"
+              sequence="20"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         dnj.machine.status — views
+    ══════════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_dnj_machine_status_tree" model="ir.ui.view">
+        <field name="name">dnj.machine.status.tree</field>
+        <field name="model">dnj.machine.status</field>
+        <field name="arch" type="xml">
+            <tree string="Machine Monitoring"
+                  decoration-success="online == True"
+                  decoration-danger="online == False and ip_address != False"
+                  decoration-muted="not ip_address">
+                <field name="workcenter_id"/>
+                <field name="ip_address"/>
+                <field name="modbus_enabled"/>
+                <field name="online"/>
+                <field name="response_ms" string="Ping (ms)"/>
+                <field name="machine_running" string="Running"/>
+                <field name="machine_speed" string="Speed (sh/h)"/>
+                <field name="machine_counter" string="Counter"/>
+                <field name="last_check"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_dnj_machine_status_form" model="ir.ui.view">
+        <field name="name">dnj.machine.status.form</field>
+        <field name="model">dnj.machine.status</field>
+        <field name="arch" type="xml">
+            <form string="Machine Monitoring">
+                <sheet>
+                    <group string="Machine">
+                        <group>
+                            <field name="workcenter_id"/>
+                            <field name="ip_address"
+                                   placeholder="192.168.1.100"
+                                   help="IPv4 of the machine on the factory LAN"/>
+                        </group>
+                        <group>
+                            <field name="modbus_enabled"/>
+                            <field name="modbus_port"
+                                   attrs="{'invisible': [('modbus_enabled','=',False)]}"/>
+                        </group>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1"
+                               placeholder="Machine model, Modbus register map, contact person…"/>
+                    </group>
+                    <group string="Live Status" attrs="{'invisible': [('ip_address','=',False)]}">
+                        <group>
+                            <field name="online" readonly="1"/>
+                            <field name="response_ms" readonly="1" string="Ping (ms)"/>
+                            <field name="last_check" readonly="1"/>
+                            <field name="last_online" readonly="1"/>
+                        </group>
+                        <group attrs="{'invisible': [('modbus_enabled','=',False)]}">
+                            <field name="machine_running" readonly="1"/>
+                            <field name="machine_speed" readonly="1"/>
+                            <field name="machine_counter" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_dnj_machine_status" model="ir.actions.act_window">
+        <field name="name">Machine Monitoring</field>
+        <field name="res_model">dnj.machine.status</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
 </odoo>

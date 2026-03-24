@@ -1,1 +1,3 @@
-# No third-party deps — uses only Python stdlib (urllib, subprocess, json)
+# Pure Python stdlib — no pip packages required.
+# Modbus TCP is implemented with raw sockets (struct + socket modules).
+# If you need OPC-UA in the future: pip install asyncua
