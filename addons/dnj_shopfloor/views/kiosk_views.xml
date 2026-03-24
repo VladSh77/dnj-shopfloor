@@ -18,5 +18,6 @@
               name="Dashboard"
               parent="dnj_shopfloor.menu_dnj_shopfloor_root"
               action="dnj_shopfloor.action_dnj_shopfloor_dashboard"
+              groups="mrp.group_mrp_manager"
               sequence="5"/>
 </odoo>
