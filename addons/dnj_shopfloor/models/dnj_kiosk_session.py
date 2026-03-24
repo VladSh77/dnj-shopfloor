@@ -61,13 +61,20 @@ class DnjKioskSession(models.Model):
     work_end_time = fields.Datetime(string='Work End')
 
     duration_total = fields.Float(
-        string='Total Time (min)', compute='_compute_durations', store=False
+        string='Total Session (min)', compute='_compute_durations', store=False,
+        help='From login to logout.'
+    )
+    work_duration = fields.Float(
+        string='Work Duration (min)', compute='_compute_durations', store=False,
+        help='From START button to STOP — real wall-clock production time including pauses.'
     )
     duration_net = fields.Float(
-        string='Net Work (min)', compute='_compute_durations', store=False
+        string='Net Work (min)', compute='_compute_durations', store=False,
+        help='Work duration minus pause time = pure productive time.'
     )
     duration_pause = fields.Float(
-        string='Pause Time (min)', compute='_compute_durations', store=False
+        string='Pause Time (min)', compute='_compute_durations', store=False,
+        help='Total time spent on pauses (coffee, maintenance, etc.).'
     )
 
     # ── test print ────────────────────────────────────────────────────────────
@@ -102,19 +109,35 @@ class DnjKioskSession(models.Model):
             dt = rec.start_time.strftime('%Y-%m-%d %H:%M') if rec.start_time else ''
             rec.name = f"{rec.operator_id.name or '?'} / {rec.workcenter_id.name or '?'} / {dt}"
 
-    @api.depends('start_time', 'end_time', 'pause_ids.duration_minutes')
+    @api.depends('start_time', 'end_time', 'work_start_time', 'work_end_time',
+                 'pause_ids.duration_minutes')
     def _compute_durations(self):
         now = fields.Datetime.now()
         for rec in self:
             if not rec.start_time:
-                rec.duration_total = rec.duration_net = rec.duration_pause = 0.0
+                rec.duration_total = rec.work_duration = \
+                    rec.duration_net = rec.duration_pause = 0.0
                 continue
-            end = rec.end_time or now
-            total = (end - rec.start_time).total_seconds() / 60
+
+            # Total session (login → logout)
+            session_end = rec.end_time or now
+            rec.duration_total = round(
+                (session_end - rec.start_time).total_seconds() / 60, 1)
+
+            # Pause time
             pause = sum(rec.pause_ids.mapped('duration_minutes'))
-            rec.duration_total = round(total, 1)
             rec.duration_pause = round(pause, 1)
-            rec.duration_net = round(total - pause, 1)
+
+            # Work duration (START → STOP, never subtracts pauses — that's what the clock shows)
+            if rec.work_start_time:
+                work_end = rec.work_end_time or now
+                work_dur = (work_end - rec.work_start_time).total_seconds() / 60
+                rec.work_duration = round(work_dur, 1)
+                # Net = wall-clock work time minus pauses = pure productive time
+                rec.duration_net = round(work_dur - pause, 1)
+            else:
+                rec.work_duration = 0.0
+                rec.duration_net = 0.0
 
     # ── state transitions ─────────────────────────────────────────────────────
 

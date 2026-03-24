@@ -134,6 +134,7 @@
                             <field name="end_time" readonly="1"/>
                             <field name="work_start_time" readonly="1"/>
                             <field name="work_end_time" readonly="1"/>
+                            <field name="work_duration" readonly="1"/>
                             <field name="duration_total" readonly="1"/>
                             <field name="duration_net" readonly="1"/>
                             <field name="duration_pause" readonly="1"/>

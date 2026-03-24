@@ -257,9 +257,10 @@ export class DnjShopfloorKiosk extends Component {
             this.state.sessionState = status.state;
 
             if (status.state === 'progress' || status.state === 'paused') {
-                this.state.timerSec = calcElapsedSec(status.work_start_time, status.pause_minutes);
+                // Timer = total wall-clock time from START (pauses do NOT stop it)
+                this.state.timerSec = calcElapsedSec(status.work_start_time, 0);
                 this.state.screen = 'work';
-                if (status.state === 'progress') this._startTimer();
+                this._startTimer();  // always running — pause does not stop the clock
             } else {
                 await this._loadWorkorders();
                 this.state.screen = 'queue';
@@ -356,7 +357,7 @@ export class DnjShopfloorKiosk extends Component {
         try {
             await this._sessionAction('pause', { reason });
             this.state.sessionState = 'paused';
-            this._stopTimer();
+            // Timer keeps running — pause time is tracked separately in dnj.kiosk.pause
             this._persistSession();
         } catch (e) { this._err(e); }
         finally { this.state.saving = false; }
@@ -367,7 +368,7 @@ export class DnjShopfloorKiosk extends Component {
         try {
             await this._sessionAction('resume');
             this.state.sessionState = 'progress';
-            this._startTimer();
+            // Timer was never stopped — no need to restart
             this._persistSession();
             this._ok("Praca wznowiona!");
         } catch (e) { this._err(e); }
