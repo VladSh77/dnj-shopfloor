@@ -216,6 +216,7 @@
 
     <menuitem id="menu_dnj_shopfloor_root"
               name="DNJ Shopfloor"
+              web_icon="dnj_shopfloor,static/description/icon.png"
               sequence="10"/>
 
 
