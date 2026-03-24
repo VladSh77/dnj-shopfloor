@@ -13,4 +13,10 @@
         <field name="tag">dnj_shopfloor_dashboard_action</field>
         <field name="target">main</field>
     </record>
+
+    <menuitem id="menu_dnj_shopfloor_dashboard"
+              name="Dashboard"
+              parent="dnj_shopfloor.menu_dnj_shopfloor_root"
+              action="dnj_shopfloor.action_dnj_shopfloor_dashboard"
+              sequence="5"/>
 </odoo>
