@@ -25,14 +25,6 @@
         <field name="arch" type="xml">
             <form string="Operator">
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button name="%(action_dnj_kiosk_session_by_operator)d"
-                                type="action"
-                                class="oe_stat_button"
-                                icon="fa-clock-o">
-                            <field name="session_count" widget="statinfo" string="Sessions"/>
-                        </button>
-                    </div>
                     <field name="active" widget="boolean_toggle"/>
                     <group>
                         <group>
