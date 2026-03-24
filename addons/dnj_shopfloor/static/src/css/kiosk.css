@@ -1,0 +1,7 @@
+/* DNJ Shopfloor Kiosk — global styles */
+
+/* Work-order state badges */
+.dnj-state-pending  { background: #333; color: #aaa; }
+.dnj-state-waiting  { background: #5c4a00; color: #f0b800; }
+.dnj-state-ready    { background: #1e4020; color: #60c060; }
+.dnj-state-progress { background: #1e3050; color: #60a0e0; }

@@ -253,8 +253,7 @@
                              t-esc="'MO: ' + wo.production_id[1]"/>
                     </div>
                     <div class="d-flex flex-column align-items-end gap-2">
-                        <span class="badge"
-                              t-attf-style="background:#{{'pending':'#333','waiting':'#5c4a00','ready':'#1e4020','progress':'#1e3050'}[wo.state] || '#333'};color:#{{'pending':'#aaa','waiting':'#f0b800','ready':'#60c060','progress':'#60a0e0'}[wo.state] || '#aaa'};"
+                        <span t-attf-class="badge dnj-state-#{wo.state}"
                               t-esc="stateLabel(wo.state)"/>
                         <div style="width:110px;">
                             <div class="d-flex justify-content-between mb-1"
