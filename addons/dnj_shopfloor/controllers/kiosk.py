@@ -219,6 +219,74 @@ class DnjKioskController(http.Controller):
             rec.write(vals)
         return {'ok': True, 'updated': len(machines)}
 
+    # ── machine detail stats ──────────────────────────────────────────────────
+
+    @http.route('/dnj_shopfloor/machine/stats', type='json', auth='user')
+    def machine_stats(self, workcenter_id: int):
+        """Detailed stats for one machine — used by dashboard detail panel."""
+        from datetime import timedelta
+        env = request.env
+        now = fields.Datetime.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_start  = today_start - timedelta(days=7)
+
+        Session = env['dnj.kiosk.session'].sudo()
+
+        # Today sessions (all states, including live)
+        today_sessions = Session.search([
+            ('workcenter_id', '=', workcenter_id),
+            ('start_time',    '>=', today_start),
+        ])
+        today_produced  = sum(today_sessions.mapped('qty_produced'))
+        today_scrap     = sum(today_sessions.mapped('qty_scrap'))
+        today_work_min  = sum(s.work_duration  for s in today_sessions)
+        today_pause_min = sum(s.duration_pause for s in today_sessions)
+
+        # Operators active in last 7 days
+        week_sessions = Session.search([
+            ('workcenter_id', '=', workcenter_id),
+            ('start_time',    '>=', week_start),
+        ])
+        ops = {}
+        for s in week_sessions:
+            oid = s.operator_id.id
+            if oid not in ops:
+                ops[oid] = {'name': s.operator_id.name, 'sessions': 0, 'produced': 0}
+            ops[oid]['sessions'] += 1
+            ops[oid]['produced'] += s.qty_produced
+
+        # Last 10 sessions (most recent first)
+        last_sessions = Session.search(
+            [('workcenter_id', '=', workcenter_id)],
+            limit=10, order='start_time desc',
+        )
+        sessions_list = []
+        for s in last_sessions:
+            wo = s.workorder_id
+            sessions_list.append({
+                'id':           s.id,
+                'start_time':   s.start_time.strftime('%d.%m %H:%M') if s.start_time else '',
+                'operator':     s.operator_id.name,
+                'workorder':    wo.name if wo else '—',
+                'product':      wo.product_id.display_name if wo and wo.product_id else '',
+                'state':        s.state,
+                'qty_produced': s.qty_produced,
+                'qty_scrap':    s.qty_scrap,
+                'work_min':     round(s.work_duration, 0),
+            })
+
+        return {
+            'today': {
+                'session_count': len(today_sessions),
+                'qty_produced':  today_produced,
+                'qty_scrap':     today_scrap,
+                'work_minutes':  round(today_work_min, 1),
+                'pause_minutes': round(today_pause_min, 1),
+            },
+            'operators_7d':    list(ops.values()),
+            'recent_sessions': sessions_list,
+        }
+
     # ── manager dashboard data ─────────────────────────────────────────────────
 
     @http.route('/dnj_shopfloor/dashboard', type='json', auth='user')

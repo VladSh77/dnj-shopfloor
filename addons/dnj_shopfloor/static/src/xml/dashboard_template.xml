@@ -5,18 +5,17 @@
      Dashboard root
 ══════════════════════════════════════════════════════════════════ -->
 <t t-name="dnj_shopfloor.Dashboard" owl="1">
-    <div style="min-height:100vh;background:#111209;color:#E8E6D0;font-family:'Segoe UI',system-ui,sans-serif;">
+    <div style="min-height:100vh;background:#111209;color:#E8E6D0;font-family:'Segoe UI',system-ui,sans-serif;position:relative;">
 
         <!-- Header -->
         <div class="d-flex align-items-center px-4"
-             style="height:56px;background:#1C1C12;border-bottom:2px solid #C9A227;">
+             style="height:56px;background:#1C1C12;border-bottom:2px solid #C9A227;position:relative;z-index:800;">
             <img src="https://dnj.pl/img/logo.png" alt="DNJ"
                  style="height:32px;margin-right:10px;" onerror="this.style.display='none'"/>
             <span style="color:#C9A227;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.95rem;">
                 Dashboard Produkcji
             </span>
 
-            <!-- summary badges -->
             <div class="d-flex gap-3 ms-4">
                 <span class="badge px-3 py-2"
                       style="background:#1e4020;color:#60c060;font-size:.8rem;border-radius:8px;">
@@ -33,8 +32,7 @@
             </div>
 
             <div class="ms-auto d-flex align-items-center gap-3">
-                <span t-if="state.lastUpdate"
-                      style="color:#555540;font-size:.75rem;">
+                <span t-if="state.lastUpdate" style="color:#555540;font-size:.75rem;">
                     Aktualizacja: <t t-esc="state.lastUpdate"/>
                 </span>
                 <span style="color:#333320;font-size:.72rem;">auto-refresh 30s</span>
@@ -43,10 +41,8 @@
 
         <!-- Loading -->
         <t t-if="state.loading">
-            <div class="d-flex justify-content-center align-items-center"
-                 style="height:60vh;">
-                <div class="spinner-border"
-                     style="width:3rem;height:3rem;color:#C9A227;border-width:3px;"/>
+            <div class="d-flex justify-content-center align-items-center" style="height:60vh;">
+                <div class="spinner-border" style="width:3rem;height:3rem;color:#C9A227;border-width:3px;"/>
             </div>
         </t>
 
@@ -55,11 +51,34 @@
             <div class="row g-3">
                 <t t-foreach="state.machines" t-as="wc" t-key="wc.id">
                     <div class="col-12 col-md-6 col-xl-4">
-                        <MachineCard wc="wc" tick="state.tick"/>
+                        <div style="cursor:pointer;transition:transform .15s;"
+                             t-on-click="() => this.openDetail(wc)"
+                             t-attf-class="machine-card-wrapper#{state.selectedWc and state.selectedWc.id === wc.id ? ' selected' : ''}">
+                            <MachineCard wc="wc" tick="state.tick"/>
+                        </div>
                     </div>
                 </t>
             </div>
         </div>
+
+        <!-- Backdrop -->
+        <t t-if="state.selectedWc">
+            <div style="position:fixed;inset:0;z-index:850;background:rgba(0,0,0,.55);"
+                 t-on-click="closeDetail"/>
+        </t>
+
+        <!-- Detail panel -->
+        <t t-if="state.selectedWc">
+            <div style="position:fixed;top:0;right:0;bottom:0;width:460px;max-width:100vw;z-index:900;
+                        background:#161610;border-left:2px solid #C9A227;display:flex;flex-direction:column;overflow:hidden;">
+                <MachineDetailPanel
+                    wc="state.selectedWc"
+                    stats="state.selectedStats"
+                    statsLoading="state.statsLoading"
+                    tick="state.tick"
+                    onClose="() => this.closeDetail()"/>
+            </div>
+        </t>
     </div>
 </t>
 
@@ -74,15 +93,13 @@
         <div class="d-flex align-items-center justify-content-between px-3 py-2"
              t-attf-style="background:#{statusColor};border-bottom:1px solid #333320;">
             <div class="d-flex align-items-center gap-2">
-                <!-- network ping dot -->
                 <t t-if="isMonitored">
                     <span t-attf-style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#{isOnline ? '#60c060' : '#c03030'};box-shadow:0 0 #{isOnline ? '6px #60c060' : '4px #c03030'};"
                           t-att-title="pingLabel"/>
                 </t>
                 <span class="fw-bold" style="font-size:1rem;" t-esc="props.wc.name"/>
                 <t t-if="props.wc.code">
-                    <span style="font-size:.72rem;color:#C9A227;letter-spacing:.1em;"
-                          t-esc="props.wc.code"/>
+                    <span style="font-size:.72rem;color:#C9A227;letter-spacing:.1em;" t-esc="props.wc.code"/>
                 </t>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -99,32 +116,27 @@
         <!-- Body -->
         <div class="p-3">
             <t t-if="!sess">
-                <!-- Idle machine -->
                 <div class="text-center py-4" style="color:#555540;">
-                    <div style="font-size:2.5rem;margin-bottom:.5rem;">⚙</div>
-                    <div style="font-size:.9rem;">Maszyna wolna</div>
+                    <div style="font-size:2rem;margin-bottom:.4rem;opacity:.4;">⚙</div>
+                    <div style="font-size:.85rem;">Maszyna wolna</div>
+                    <div style="font-size:.72rem;color:#444430;margin-top:.25rem;">kliknij aby zobaczyć statystyki</div>
                 </div>
             </t>
             <t t-else="">
-                <!-- Operator + work order info -->
+                <!-- Operator + work order -->
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <div style="font-size:.72rem;color:#888870;text-transform:uppercase;letter-spacing:.08em;">
-                            Operator
-                        </div>
+                        <div style="font-size:.72rem;color:#888870;text-transform:uppercase;letter-spacing:.08em;">Operator</div>
                         <div class="fw-semibold" style="color:#C9A227;" t-esc="sess.operator"/>
                     </div>
                     <t t-if="sess.workorder">
                         <div class="text-end">
-                            <div style="font-size:.72rem;color:#888870;text-transform:uppercase;letter-spacing:.08em;">
-                                Zlecenie
-                            </div>
+                            <div style="font-size:.72rem;color:#888870;text-transform:uppercase;letter-spacing:.08em;">Zlecenie</div>
                             <div class="fw-semibold" style="font-size:.9rem;" t-esc="sess.workorder"/>
                         </div>
                     </t>
                 </div>
 
-                <!-- Product -->
                 <t t-if="sess.product">
                     <div class="mb-3 px-2 py-1"
                          style="background:#222218;border-radius:8px;font-size:.85rem;color:#E8E6D0;"
@@ -145,11 +157,10 @@
                     </div>
                 </t>
 
-                <!-- TIME BAR -->
+                <!-- Time bar -->
                 <t t-if="isActive and plannedSec">
                     <div class="mb-2">
-                        <div class="d-flex justify-content-between mb-1"
-                             style="font-size:.72rem;color:#888870;">
+                        <div class="d-flex justify-content-between mb-1" style="font-size:.72rem;color:#888870;">
                             <span>Czas</span>
                             <span t-attf-style="color:#{timeBarColor};font-weight:600;">
                                 <t t-esc="fmtTime(timerSec)"/> / <t t-esc="fmtTime(plannedSec)"/>
@@ -169,8 +180,7 @@
 
                 <!-- Qty bar -->
                 <t t-if="sess.qty_production">
-                    <div class="mb-1 d-flex justify-content-between"
-                         style="font-size:.72rem;color:#888870;">
+                    <div class="mb-1 d-flex justify-content-between" style="font-size:.72rem;color:#888870;">
                         <span>Wykonano</span>
                         <span><t t-esc="sess.qty_produced"/> / <t t-esc="sess.qty_production"/> szt. (<t t-esc="progressPct"/>%)</span>
                     </div>
@@ -179,7 +189,7 @@
                     </div>
                 </t>
 
-                <!-- Modbus live data -->
+                <!-- Modbus -->
                 <t t-if="hasModbus and isOnline">
                     <div class="d-flex gap-2 mb-2" style="font-size:.78rem;">
                         <span t-attf-style="background:#{machineRunning ? '#1e4020' : '#2a1a00'};color:#{machineRunning ? '#60c060' : '#C9A227'};border-radius:6px;padding:2px 8px;">
@@ -198,13 +208,329 @@
                     </div>
                 </t>
 
-                <!-- Scrap -->
                 <t t-if="sess.qty_scrap">
                     <div style="font-size:.8rem;color:#e08080;">
                         Braki: <t t-esc="sess.qty_scrap"/> szt.
                     </div>
                 </t>
             </t>
+        </div>
+    </div>
+</t>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     MachineDetailPanel
+══════════════════════════════════════════════════════════════════ -->
+<t t-name="dnj_shopfloor.MachineDetailPanel" owl="1">
+    <div style="display:flex;flex-direction:column;height:100%;font-family:'Segoe UI',system-ui,sans-serif;">
+
+        <!-- ── Panel header ──────────────────────────────────────────────── -->
+        <div class="d-flex align-items-center gap-3 px-4 py-3"
+             style="background:#1C1C12;border-bottom:1px solid #333320;flex-shrink:0;">
+            <button class="btn btn-sm"
+                    style="background:transparent;border:1px solid #555540;color:#C9A227;padding:4px 10px;font-size:1rem;line-height:1;"
+                    t-on-click="() => props.onClose()">←</button>
+            <div class="flex-grow-1">
+                <div class="fw-bold" style="font-size:1.05rem;" t-esc="props.wc.name"/>
+                <t t-if="props.wc.code">
+                    <span style="font-size:.72rem;color:#C9A227;letter-spacing:.1em;" t-esc="props.wc.code"/>
+                </t>
+            </div>
+            <!-- Network dot in header -->
+            <t t-if="isMonitored">
+                <div class="d-flex align-items-center gap-1">
+                    <span t-attf-style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#{isOnline ? '#60c060' : '#c03030'};"/>
+                    <span t-attf-style="font-size:.75rem;color:#{isOnline ? '#60c060' : '#c03030'};">
+                        <t t-esc="isOnline ? (ms.response_ms + 'ms') : 'offline'"/>
+                    </span>
+                </div>
+            </t>
+        </div>
+
+        <!-- ── Scrollable content ─────────────────────────────────────────── -->
+        <div style="flex:1;overflow-y:auto;padding:1.25rem;">
+
+            <!-- ═══ AKTUALNIE ════════════════════════════════════════════════ -->
+            <div class="mb-1" style="font-size:.65rem;color:#C9A227;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid #333320;padding-bottom:.25rem;">
+                Aktualnie
+            </div>
+
+            <t t-if="hasSess">
+                <!-- Operator / WO / Product -->
+                <div class="d-flex justify-content-between align-items-start mb-2 mt-2">
+                    <div>
+                        <div style="font-size:.7rem;color:#888870;text-transform:uppercase;">Operator</div>
+                        <div class="fw-semibold" style="color:#C9A227;" t-esc="sess.operator"/>
+                    </div>
+                    <t t-if="sess.workorder">
+                        <div class="text-end">
+                            <div style="font-size:.7rem;color:#888870;text-transform:uppercase;">Zlecenie</div>
+                            <div class="fw-semibold" style="font-size:.9rem;" t-esc="sess.workorder"/>
+                        </div>
+                    </t>
+                </div>
+                <t t-if="sess.product">
+                    <div class="mb-3 px-2 py-1" style="background:#222218;border-radius:8px;font-size:.85rem;" t-esc="sess.product"/>
+                </t>
+
+                <!-- State badge -->
+                <div class="mb-3">
+                    <span t-attf-style="background:#{stateBg(sess.state)};color:#{stateTextColor(sess.state)};padding:3px 12px;border-radius:8px;font-size:.8rem;font-weight:600;">
+                        <t t-esc="stateLabel(sess.state)"/>
+                    </span>
+                </div>
+
+                <!-- Timer block (only when work started) -->
+                <t t-if="sess.work_start">
+                    <!-- Big wall-clock timer -->
+                    <div class="text-center mb-1">
+                        <div style="font-size:.7rem;color:#888870;text-transform:uppercase;letter-spacing:.08em;">Czas produkcji (łącznie z pauzami)</div>
+                        <div style="font-size:2.8rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:#E8E6D0;line-height:1.1;">
+                            <t t-esc="fmtTime(timerSec)"/>
+                        </div>
+                    </div>
+
+                    <!-- Net + pause breakdown -->
+                    <div class="d-flex gap-3 justify-content-center mb-3">
+                        <div class="text-center px-3 py-1" style="background:#222218;border-radius:8px;">
+                            <div style="font-size:.65rem;color:#888870;text-transform:uppercase;">Netto</div>
+                            <div style="font-size:1rem;font-weight:600;color:#60c060;font-variant-numeric:tabular-nums;">
+                                <t t-esc="fmtTime(netSec)"/>
+                            </div>
+                        </div>
+                        <div class="text-center px-3 py-1" style="background:#222218;border-radius:8px;">
+                            <div style="font-size:.65rem;color:#888870;text-transform:uppercase;">Pauza</div>
+                            <div style="font-size:1rem;font-weight:600;color:#C9A227;font-variant-numeric:tabular-nums;">
+                                <t t-esc="fmtTime(pauseSec)"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time bar -->
+                    <t t-if="plannedSec">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1" style="font-size:.72rem;color:#888870;">
+                                <span>Czas / Plan</span>
+                                <span t-attf-style="color:#{timeBarColor};font-weight:600;">
+                                    <t t-esc="fmtTime(timerSec)"/> / <t t-esc="fmtTime(plannedSec)"/>
+                                    (<t t-esc="timePct"/>%)
+                                </span>
+                            </div>
+                            <div style="height:12px;background:#222218;border-radius:6px;overflow:hidden;">
+                                <div t-attf-style="width:#{timeBarWidth}%;height:100%;background:#{timeBarColor};border-radius:6px;transition:width 1s;"/>
+                            </div>
+                            <t t-if="isOvertime">
+                                <div class="mt-1 fw-bold" style="color:#c03030;font-size:.8rem;">
+                                    ⚠ Nadgodziny: +<t t-esc="fmtTime(overtimeSec)"/>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+                </t>
+
+                <!-- Qty progress -->
+                <t t-if="sess.qty_production">
+                    <div class="mb-1 d-flex justify-content-between" style="font-size:.72rem;color:#888870;">
+                        <span>Wykonano</span>
+                        <span><t t-esc="sess.qty_produced"/> / <t t-esc="sess.qty_production"/> szt. (<t t-esc="progressPct"/>%)</span>
+                    </div>
+                    <div style="height:10px;background:#333320;border-radius:5px;overflow:hidden;margin-bottom:.5rem;">
+                        <div t-attf-style="width:#{progressPct}%;height:100%;background:#1e3050;border-radius:5px;transition:width .5s;"/>
+                    </div>
+                </t>
+
+                <!-- Scrap -->
+                <t t-if="sess.qty_scrap">
+                    <div class="mb-2 px-2 py-1" style="background:#2a1010;border-radius:8px;font-size:.85rem;color:#e08080;">
+                        ⚠ Braki: <strong><t t-esc="sess.qty_scrap"/></strong> szt.
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <div class="py-3 text-center mb-2" style="color:#555540;font-size:.9rem;">
+                    Maszyna wolna
+                </div>
+            </t>
+
+            <!-- ═══ DZIŚ ══════════════════════════════════════════════════════ -->
+            <div class="mt-3 mb-1" style="font-size:.65rem;color:#C9A227;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid #333320;padding-bottom:.25rem;">
+                Dziś
+            </div>
+
+            <t t-if="props.statsLoading">
+                <div class="d-flex justify-content-center py-3">
+                    <div class="spinner-border spinner-border-sm" style="color:#C9A227;"/>
+                </div>
+            </t>
+            <t t-elif="today">
+                <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
+                    <div class="text-center px-3 py-2" style="background:#222218;border-radius:8px;flex:1;min-width:80px;">
+                        <div style="font-size:.65rem;color:#888870;text-transform:uppercase;">Sesje</div>
+                        <div style="font-size:1.3rem;font-weight:700;color:#E8E6D0;"><t t-esc="today.session_count"/></div>
+                    </div>
+                    <div class="text-center px-3 py-2" style="background:#222218;border-radius:8px;flex:1;min-width:80px;">
+                        <div style="font-size:.65rem;color:#888870;text-transform:uppercase;">Prod.</div>
+                        <div style="font-size:1.3rem;font-weight:700;color:#60c060;"><t t-esc="today.qty_produced"/></div>
+                    </div>
+                    <div class="text-center px-3 py-2" style="background:#222218;border-radius:8px;flex:1;min-width:80px;">
+                        <div style="font-size:.65rem;color:#888870;text-transform:uppercase;">Braki</div>
+                        <div t-attf-style="font-size:1.3rem;font-weight:700;color:#{today.qty_scrap > 0 ? '#e08080' : '#888870'};"><t t-esc="today.qty_scrap"/></div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    <div class="px-3 py-2" style="background:#222218;border-radius:8px;flex:1;">
+                        <div style="font-size:.65rem;color:#888870;text-transform:uppercase;">Czas pracy</div>
+                        <div style="font-size:1rem;font-weight:600;color:#E8E6D0;"><t t-esc="fmtMins(today.work_minutes)"/></div>
+                    </div>
+                    <div class="px-3 py-2" style="background:#222218;border-radius:8px;flex:1;">
+                        <div style="font-size:.65rem;color:#888870;text-transform:uppercase;">Pauzy</div>
+                        <div style="font-size:1rem;font-weight:600;color:#C9A227;"><t t-esc="fmtMins(today.pause_minutes)"/></div>
+                    </div>
+                </div>
+            </t>
+            <t t-else="">
+                <div class="py-2" style="color:#555540;font-size:.85rem;">Brak danych</div>
+            </t>
+
+            <!-- ═══ OPERATORZY (7 dni) ════════════════════════════════════════ -->
+            <t t-if="ops.length">
+                <div class="mt-3 mb-2" style="font-size:.65rem;color:#C9A227;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid #333320;padding-bottom:.25rem;">
+                    Operatorzy (ostatnie 7 dni)
+                </div>
+                <div class="d-flex flex-column gap-1 mb-3">
+                    <t t-foreach="ops" t-as="op" t-key="op.name">
+                        <div class="d-flex justify-content-between align-items-center px-2 py-1"
+                             style="background:#222218;border-radius:6px;">
+                            <span style="color:#C9A227;font-weight:500;" t-esc="op.name"/>
+                            <div class="d-flex gap-3" style="font-size:.8rem;color:#888870;">
+                                <span><t t-esc="op.sessions"/> sesji</span>
+                                <span style="color:#E8E6D0;"><t t-esc="op.produced"/> szt.</span>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </t>
+
+            <!-- ═══ MASZYNA ═══════════════════════════════════════════════════ -->
+            <div class="mt-3 mb-2" style="font-size:.65rem;color:#C9A227;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid #333320;padding-bottom:.25rem;">
+                Maszyna
+            </div>
+
+            <div class="mb-3">
+                <t t-if="isMonitored">
+                    <!-- Network status -->
+                    <div class="d-flex align-items-center gap-2 mb-2 px-2 py-2"
+                         t-attf-style="background:#{isOnline ? '#162016' : '#201616'};border-radius:8px;">
+                        <span t-attf-style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#{isOnline ? '#60c060' : '#c03030'};"/>
+                        <span t-attf-style="font-weight:600;color:#{isOnline ? '#60c060' : '#e08080'};">
+                            <t t-esc="isOnline ? 'Online' : 'Offline'"/>
+                        </span>
+                        <t t-if="isOnline">
+                            <span style="color:#888870;font-size:.8rem;"><t t-esc="ms.response_ms"/>ms</span>
+                        </t>
+                        <t t-if="ms.last_check">
+                            <span style="color:#555540;font-size:.75rem;margin-left:auto;">
+                                Ostatni ping: <t t-esc="ms.last_check.slice(11,16)"/>
+                            </span>
+                        </t>
+                    </div>
+
+                    <!-- Modbus data -->
+                    <t t-if="hasModbus and isOnline">
+                        <div class="d-flex gap-2 mb-2">
+                            <div class="text-center px-3 py-2" style="background:#222218;border-radius:8px;flex:1;">
+                                <div style="font-size:.65rem;color:#888870;text-transform:uppercase;">Status</div>
+                                <div t-attf-style="font-size:.9rem;font-weight:600;color:#{ms.machine_running ? '#60c060' : '#C9A227'};">
+                                    <t t-esc="ms.machine_running ? '▶ Running' : '■ Stopped'"/>
+                                </div>
+                            </div>
+                            <t t-if="ms.machine_speed">
+                                <div class="text-center px-3 py-2" style="background:#222218;border-radius:8px;flex:1;">
+                                    <div style="font-size:.65rem;color:#888870;text-transform:uppercase;">Prędkość</div>
+                                    <div style="font-size:.9rem;font-weight:600;color:#E8E6D0;">
+                                        <t t-esc="ms.machine_speed"/> sh/h
+                                    </div>
+                                </div>
+                            </t>
+                            <t t-if="ms.machine_counter">
+                                <div class="text-center px-3 py-2" style="background:#222218;border-radius:8px;flex:1;">
+                                    <div style="font-size:.65rem;color:#888870;text-transform:uppercase;">Licznik</div>
+                                    <div style="font-size:.9rem;font-weight:600;color:#E8E6D0;">
+                                        <t t-esc="ms.machine_counter"/>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+                    <t t-elif="hasModbus and !isOnline">
+                        <div class="px-2 py-1 mb-2" style="color:#555540;font-size:.8rem;">
+                            Modbus: brak połączenia
+                        </div>
+                    </t>
+                </t>
+                <t t-else="">
+                    <div class="px-2 py-1 mb-2" style="color:#555540;font-size:.8rem;">
+                        Brak monitoringu sieciowego — skonfiguruj IP w ustawieniach
+                    </div>
+                </t>
+
+                <!-- Placeholders for future data -->
+                <div class="d-flex gap-2 mt-2">
+                    <div class="px-3 py-2" style="background:#1a1a10;border-radius:8px;flex:1;border:1px dashed #333320;opacity:.6;">
+                        <div style="font-size:.65rem;color:#555540;text-transform:uppercase;">Papier</div>
+                        <div style="font-size:.85rem;color:#444430;">— (wkrótce)</div>
+                    </div>
+                    <div class="px-3 py-2" style="background:#1a1a10;border-radius:8px;flex:1;border:1px dashed #333320;opacity:.6;">
+                        <div style="font-size:.65rem;color:#555540;text-transform:uppercase;">Farba</div>
+                        <div style="font-size:.85rem;color:#444430;">— (wkrótce)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ OSTATNIE SESJE ════════════════════════════════════════════ -->
+            <t t-if="sessions.length">
+                <div class="mt-3 mb-2" style="font-size:.65rem;color:#C9A227;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid #333320;padding-bottom:.25rem;">
+                    Ostatnie sesje
+                </div>
+                <div style="font-size:.8rem;">
+                    <t t-foreach="sessions" t-as="s" t-key="s.id">
+                        <div class="px-2 py-2 mb-1" style="background:#1C1C12;border-radius:8px;border:1px solid #2a2a1a;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span style="color:#888870;font-size:.72rem;" t-esc="s.start_time"/>
+                                <span t-attf-style="background:#{stateBg(s.state)};color:#{stateTextColor(s.state)};padding:1px 8px;border-radius:5px;font-size:.7rem;font-weight:600;">
+                                    <t t-esc="stateLabel(s.state)"/>
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span style="color:#C9A227;font-weight:500;" t-esc="s.operator"/>
+                                    <t t-if="s.workorder and s.workorder != '—'">
+                                        <span style="color:#555540;margin:0 4px;">·</span>
+                                        <span style="color:#888870;" t-esc="s.workorder"/>
+                                    </t>
+                                </div>
+                                <div class="d-flex gap-2" style="color:#E8E6D0;">
+                                    <t t-if="s.qty_produced">
+                                        <span style="color:#60c060;"><t t-esc="s.qty_produced"/> szt.</span>
+                                    </t>
+                                    <t t-if="s.qty_scrap">
+                                        <span style="color:#e08080;">⚠<t t-esc="s.qty_scrap"/></span>
+                                    </t>
+                                    <t t-if="s.work_min">
+                                        <span style="color:#888870;"><t t-esc="fmtMins(s.work_min)"/></span>
+                                    </t>
+                                </div>
+                            </div>
+                            <t t-if="s.product">
+                                <div style="color:#666650;font-size:.72rem;margin-top:2px;" t-esc="s.product"/>
+                            </t>
+                        </div>
+                    </t>
+                </div>
+            </t>
+
+            <!-- Bottom padding -->
+            <div style="height:2rem;"/>
         </div>
     </div>
 </t>
