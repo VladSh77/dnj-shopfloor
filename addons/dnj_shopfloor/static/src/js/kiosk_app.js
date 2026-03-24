@@ -209,13 +209,7 @@ export class DnjShopfloorKiosk extends Component {
     async _loadWorkcenters() {
         this.state.loading = true;
         try {
-            const rows = await this.rpc('/web/dataset/call_kw', {
-                model: 'mrp.workcenter',
-                method: 'search_read',
-                args: [[['active', '=', true]]],
-                kwargs: { fields: ['id', 'name', 'code'], limit: 50 },
-            });
-            this.state.workcenters = rows;
+            this.state.workcenters = await this.rpc('/dnj_shopfloor/workcenters', {});
         } catch { this._err("Błąd ładowania maszyn"); }
         finally { this.state.loading = false; }
     }

@@ -10,7 +10,8 @@ class DnjKioskController(http.Controller):
     """
     JSON-RPC endpoints for the DNJ Shop Floor Kiosk.
     All routes require an authenticated Odoo session (auth='user').
-    Business logic is delegated to the Python models.
+    Data reads use sudo() so the shared kiosk Odoo account does not
+    need MRP/stock group membership — operators authenticate via PIN.
     """
 
     # ── auth ──────────────────────────────────────────────────────────────────
@@ -18,7 +19,7 @@ class DnjKioskController(http.Controller):
     @http.route('/dnj_shopfloor/authenticate', type='json', auth='user')
     def authenticate(self, pin: str, workcenter_id: int):
         """Verify operator PIN. Returns operator info or error."""
-        result = request.env['dnj.operator'].authenticate(pin, workcenter_id)
+        result = request.env['dnj.operator'].sudo().authenticate(pin, workcenter_id)
         _logger.info("PIN auth attempt workcenter_id=%s success=%s", workcenter_id, result.get('success'))
         return result
 
@@ -27,8 +28,7 @@ class DnjKioskController(http.Controller):
     @http.route('/dnj_shopfloor/session/open', type='json', auth='user')
     def session_open(self, operator_id: int, workcenter_id: int):
         """Open a new kiosk session for the authenticated operator."""
-        env = request.env
-        # Close any dangling active sessions for this operator+workcenter
+        env = request.env.sudo()
         old = env['dnj.kiosk.session'].search([
             ('operator_id', '=', operator_id),
             ('workcenter_id', '=', workcenter_id),
@@ -53,7 +53,7 @@ class DnjKioskController(http.Controller):
         actions: test_print | confirm_machine | select_workorder |
                  start_work | pause | resume | stop | logout
         """
-        session = request.env['dnj.kiosk.session'].browse(session_id)
+        session = request.env['dnj.kiosk.session'].sudo().browse(session_id)
         if not session.exists():
             return {'success': False, 'error': 'Session not found'}
         try:
@@ -99,7 +99,7 @@ class DnjKioskController(http.Controller):
     @http.route('/dnj_shopfloor/workorders', type='json', auth='user')
     def get_workorders(self, workcenter_id: int):
         """Return active work orders for the given workcenter."""
-        rows = request.env['mrp.workorder'].search_read(
+        rows = request.env['mrp.workorder'].sudo().search_read(
             domain=[
                 ('workcenter_id', '=', workcenter_id),
                 ('state', 'in', ['pending', 'waiting', 'ready', 'progress']),
@@ -111,10 +111,21 @@ class DnjKioskController(http.Controller):
         )
         return rows
 
+    @http.route('/dnj_shopfloor/workcenters', type='json', auth='user')
+    def get_workcenters(self):
+        """Return all active workcenters (for kiosk machine selector)."""
+        rows = request.env['mrp.workcenter'].sudo().search_read(
+            domain=[('active', '=', True)],
+            fields=['id', 'name', 'code'],
+            order='name asc',
+            limit=50,
+        )
+        return rows
+
     @http.route('/dnj_shopfloor/session/status', type='json', auth='user')
     def session_status(self, session_id: int):
         """Return current session state (for polling/refresh)."""
-        session = request.env['dnj.kiosk.session'].browse(session_id)
+        session = request.env['dnj.kiosk.session'].sudo().browse(session_id)
         if not session.exists():
             return {'found': False}
         pause_minutes = sum(session.pause_ids.mapped('duration_minutes'))
