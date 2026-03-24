@@ -116,7 +116,7 @@
      WorkcenterSelector — machine grid
 ══════════════════════════════════════════════════════════════════ -->
 <t t-name="dnj_shopfloor.WorkcenterSelector" owl="1">
-    <div class="flex-grow-1 overflow-auto p-4 p-md-5">
+    <div class="flex-grow-1 overflow-auto p-4 p-md-5" style="min-height:0;">
 
         <!-- Title -->
         <div class="text-center mb-5">
@@ -158,7 +158,9 @@
      PinScreen — numeric PIN pad
 ══════════════════════════════════════════════════════════════════ -->
 <t t-name="dnj_shopfloor.PinScreen" owl="1">
-    <div class="d-flex flex-column align-items-center justify-content-center flex-grow-1 gap-4">
+    <div class="d-flex flex-column align-items-center flex-grow-1"
+         style="overflow-y:auto;min-height:0;">
+        <div class="d-flex flex-column align-items-center gap-4 py-4 my-auto">
 
         <!-- Machine name + prompt -->
         <div class="text-center">
@@ -206,14 +208,15 @@
                 t-on-click="props.onBack">
             ← Zmień maszynę
         </button>
-    </div>
+        </div><!-- /inner centering div -->
+    </div><!-- /scroll wrapper -->
 </t>
 
 <!-- ══════════════════════════════════════════════════════════════════
      WorkOrderQueue — list of pending jobs + barcode
 ══════════════════════════════════════════════════════════════════ -->
 <t t-name="dnj_shopfloor.WorkOrderQueue" owl="1">
-    <div class="d-flex flex-column flex-grow-1 overflow-hidden">
+    <div class="d-flex flex-column flex-grow-1 overflow-hidden" style="min-height:0;">
 
         <!-- Toolbar -->
         <div class="d-flex align-items-center gap-3 px-4 py-2 flex-shrink-0"
@@ -281,8 +284,9 @@
      TestPrintScreen — test print qty + confirm
 ══════════════════════════════════════════════════════════════════ -->
 <t t-name="dnj_shopfloor.TestPrintScreen" owl="1">
-    <div class="d-flex flex-column align-items-center justify-content-center flex-grow-1 p-4">
-        <div class="p-4 p-md-5 text-center"
+    <div class="d-flex flex-column align-items-center flex-grow-1 p-3 p-md-4"
+         style="overflow-y:auto;min-height:0;">
+        <div class="p-4 p-md-5 text-center my-auto"
              style="background:#1C1C12;border:1px solid #333320;border-radius:20px;max-width:480px;width:100%;">
 
             <div class="mb-4">
@@ -336,8 +340,9 @@
      WorkScreen — active production (timer, progress, start/pause/stop)
 ══════════════════════════════════════════════════════════════════ -->
 <t t-name="dnj_shopfloor.WorkScreen" owl="1">
-    <div class="d-flex flex-column align-items-center justify-content-center flex-grow-1 p-4">
-        <div class="text-center" style="max-width:580px;width:100%;">
+    <div class="d-flex flex-column align-items-center flex-grow-1 p-3 p-md-4"
+         style="overflow-y:auto;min-height:0;">
+        <div class="text-center my-auto" style="max-width:580px;width:100%;">
 
             <!-- WO info -->
             <div class="mb-2">
