@@ -243,20 +243,8 @@
               parent="menu_dnj_shopfloor_root"
               sequence="90"/>
 
-    <menuitem id="menu_dnj_operator"
-              name="Operators"
-              parent="menu_dnj_shopfloor_config"
-              action="action_dnj_operator"
-              sequence="10"/>
-
-    <menuitem id="menu_dnj_machine_monitoring"
-              name="Machine Monitoring"
-              parent="menu_dnj_shopfloor_config"
-              action="action_dnj_machine_status"
-              sequence="20"/>
-
     <!-- ══════════════════════════════════════════════════════════════════
-         dnj.machine.status — views
+         dnj.machine.status — views + action (must be before menuitem)
     ══════════════════════════════════════════════════════════════════════ -->
 
     <record id="view_dnj_machine_status_tree" model="ir.ui.view">
@@ -326,5 +314,18 @@
         <field name="res_model">dnj.machine.status</field>
         <field name="view_mode">tree,form</field>
     </record>
+
+    <!-- menus -->
+    <menuitem id="menu_dnj_operator"
+              name="Operators"
+              parent="menu_dnj_shopfloor_config"
+              action="action_dnj_operator"
+              sequence="10"/>
+
+    <menuitem id="menu_dnj_machine_monitoring"
+              name="Machine Monitoring"
+              parent="menu_dnj_shopfloor_config"
+              action="action_dnj_machine_status"
+              sequence="20"/>
 
 </odoo>
