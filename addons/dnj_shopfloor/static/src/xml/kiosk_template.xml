@@ -1,261 +1,410 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         KioskMain — root container
-    ═══════════════════════════════════════════════════════════════════════════ -->
-    <t t-name="dnj_shopfloor.KioskMain" owl="1">
-        <div class="dnj-kiosk d-flex flex-column" style="height:100vh; overflow:hidden; background:#12121f; color:#e8e8f0; font-family:'Segoe UI',sans-serif;">
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     CSS variables / base styles (injected via t-name trick)
+     Dark industrial theme optimised for tablet touch
+═══════════════════════════════════════════════════════════════════════════════ -->
 
-            <!-- header -->
-            <div class="d-flex align-items-center px-4 gap-3 flex-shrink-0"
-                 style="height:56px; background:#1c1c30; border-bottom:2px solid #2e2e50;">
-                <span class="fw-bold fs-5 text-white">DNJ Shopfloor</span>
-                <t t-if="state.selectedWorkcenter">
-                    <span class="text-secondary">›</span>
-                    <span class="text-info" t-esc="state.selectedWorkcenter.name"/>
-                </t>
-                <t t-if="state.selectedWorkorder and state.screen === 'detail'">
-                    <span class="text-secondary">›</span>
-                    <span class="text-white small" t-esc="state.selectedWorkorder.name"/>
-                </t>
-            </div>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     ROOT — KioskMain
+═══════════════════════════════════════════════════════════════════════════════ -->
+<t t-name="dnj_shopfloor.KioskMain" owl="1">
+    <div class="dnj-kiosk d-flex flex-column"
+         style="height:100vh; overflow:hidden; background:#0f0f1a; color:#e8e8f0; font-family:'Segoe UI',system-ui,sans-serif; user-select:none;">
 
-            <!-- loading -->
-            <t t-if="state.loading">
-                <div class="d-flex justify-content-center align-items-center flex-grow-1">
-                    <div class="spinner-border text-info" role="status" style="width:3rem;height:3rem;"/>
-                </div>
+        <!-- ── Header ── -->
+        <div class="d-flex align-items-center px-4 flex-shrink-0"
+             style="height:52px; background:#1a1a2e; border-bottom:2px solid #252545;">
+            <span class="fw-bold me-2" style="color:#6c8ebf; letter-spacing:.06em;">DNJ SHOPFLOOR</span>
+            <t t-if="state.workcenter">
+                <span class="text-secondary me-2">›</span>
+                <span class="fw-semibold" t-esc="state.workcenter.name"/>
             </t>
-
-            <!-- screens -->
-            <t t-elif="state.screen === 'workcenter'">
-                <WorkcenterSelector
-                    workcenters="state.workcenters"
-                    onSelect.bind="selectWorkcenter"
-                />
+            <t t-if="state.operator">
+                <span class="text-secondary me-2">›</span>
+                <span style="color:#80c080;" t-esc="state.operator.name"/>
             </t>
-            <t t-elif="state.screen === 'workorders'">
-                <WorkOrderList
-                    workorders="state.workorders"
-                    workcenter="state.selectedWorkcenter"
-                    onSelect.bind="selectWorkorder"
-                    onBack.bind="goBack"
-                    onRefresh.bind="refreshWorkorders"
-                />
-            </t>
-            <t t-elif="state.screen === 'detail'">
-                <WorkOrderDetail
-                    workorder="state.selectedWorkorder"
-                    saving="state.saving"
-                    onStart.bind="startWork"
-                    onFinish.bind="finishWork"
-                    onBack.bind="goBack"
-                />
-            </t>
-
-        </div>
-    </t>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         WorkcenterSelector — grid of machines
-    ═══════════════════════════════════════════════════════════════════════════ -->
-    <t t-name="dnj_shopfloor.WorkcenterSelector" owl="1">
-        <div class="flex-grow-1 overflow-auto p-4">
-            <h4 class="text-center text-secondary mb-4 text-uppercase tracking-wide"
-                style="letter-spacing:.12em;">Wybierz maszynę</h4>
-
-            <t t-if="!workcenters.length">
-                <div class="text-center text-secondary mt-5">
-                    Brak dostępnych maszyn
-                </div>
-            </t>
-
-            <div class="row g-3 justify-content-center">
-                <t t-foreach="workcenters" t-as="wc" t-key="wc.id">
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <button class="btn w-100 h-100 d-flex flex-column align-items-center justify-content-center gap-2 p-4"
-                                style="min-height:130px; background:#1c1c30; border:2px solid #2e2e50; border-radius:14px; color:#e8e8f0; transition:border-color .15s,background .15s;"
-                                t-on-mouseenter="(ev) => { ev.currentTarget.style.borderColor='#4c4cff'; ev.currentTarget.style.background='#22223a'; }"
-                                t-on-mouseleave="(ev) => { ev.currentTarget.style.borderColor='#2e2e50'; ev.currentTarget.style.background='#1c1c30'; }"
-                                t-on-click="() => props.onSelect(wc)">
-                            <span class="fw-bold fs-5" t-esc="wc.name"/>
-                            <t t-if="wc.code">
-                                <span class="badge bg-secondary" t-esc="wc.code"/>
-                            </t>
-                        </button>
-                    </div>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <t t-if="state.operator and state.screen !== 'pin'">
+                    <button class="btn btn-outline-secondary btn-sm"
+                            style="font-size:.75rem;"
+                            t-on-click="logout"
+                            t-att-disabled="state.saving">
+                        Wyloguj
+                    </button>
                 </t>
             </div>
         </div>
-    </t>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         WorkOrderList — list of active work orders for a workcenter
-    ═══════════════════════════════════════════════════════════════════════════ -->
-    <t t-name="dnj_shopfloor.WorkOrderList" owl="1">
-        <div class="d-flex flex-column flex-grow-1 overflow-hidden">
-
-            <!-- toolbar -->
-            <div class="d-flex align-items-center gap-3 px-4 py-2 flex-shrink-0"
-                 style="background:#1c1c30; border-bottom:1px solid #2e2e50;">
-                <button class="btn btn-outline-secondary btn-sm" t-on-click="props.onBack">
-                    ← Wróć
-                </button>
-                <input t-ref="barcodeInput"
-                       class="form-control form-control-sm"
-                       style="max-width:280px; background:#12121f; border-color:#2e2e50; color:#e8e8f0;"
-                       placeholder="🔍 Skanuj lub wpisz nr zlecenia + Enter"
-                       t-on-keydown="onBarcodeKey"
-                />
-                <button class="btn btn-outline-info btn-sm ms-auto" t-on-click="props.onRefresh">
-                    ↻ Odśwież
-                </button>
-                <span class="text-secondary small">
-                    <t t-esc="workorders.length"/> zleceń
-                </span>
+        <!-- ── Loading overlay ── -->
+        <t t-if="state.loading">
+            <div class="d-flex flex-column justify-content-center align-items-center flex-grow-1">
+                <div class="spinner-border mb-3" style="width:3.5rem;height:3.5rem;color:#6c8ebf;"/>
+                <div class="text-secondary">Ładowanie...</div>
             </div>
+        </t>
 
-            <!-- list -->
-            <div class="overflow-auto flex-grow-1 p-3">
-                <t t-if="!workorders.length">
-                    <div class="text-center text-secondary mt-5">
-                        Brak aktywnych zleceń dla tej maszyny
-                    </div>
-                </t>
+        <!-- ── Screens ── -->
+        <t t-elif="state.screen === 'machine'">
+            <WorkcenterSelector workcenters="state.workcenters"
+                                loading="state.loading"
+                                onSelect.bind="selectWorkcenter"/>
+        </t>
+        <t t-elif="state.screen === 'pin'">
+            <PinScreen workcenter="state.workcenter"
+                       onAuth.bind="onAuth"
+                       onBack="() => { state.screen = 'machine'; state.workcenter = null; }"/>
+        </t>
+        <t t-elif="state.screen === 'queue'">
+            <WorkOrderQueue workorders="state.workorders"
+                            operator="state.operator"
+                            workcenter="state.workcenter"
+                            loading="state.loading"
+                            onSelect.bind="selectWorkorder"
+                            onRefresh.bind="_loadWorkorders"
+                            onLogout.bind="logout"/>
+        </t>
+        <t t-elif="state.screen === 'test_print'">
+            <TestPrintScreen workorder="state.workorder"
+                             operator="state.operator"
+                             workcenter="state.workcenter"
+                             saving="state.saving"
+                             onConfirm.bind="onTestPrintConfirm"
+                             onBack="() => { state.screen = 'queue'; }"/>
+        </t>
+        <t t-elif="state.screen === 'work'">
+            <WorkScreen workorder="state.workorder"
+                        operator="state.operator"
+                        workcenter="state.workcenter"
+                        sessionState="state.sessionState"
+                        timerSec="state.timerSec"
+                        saving="state.saving"
+                        onPause="() => state.showPauseModal = true"
+                        onResume.bind="resumeWork"
+                        onStart.bind="startWork"
+                        onStop.bind="stopWork"/>
+            <t t-if="state.showPauseModal">
+                <PauseModal onSelect.bind="pauseWork"
+                            onCancel="() => state.showPauseModal = false"/>
+            </t>
+        </t>
 
-                <t t-foreach="workorders" t-as="wo" t-key="wo.id">
-                    <div class="d-flex align-items-center justify-content-between px-4 py-3 mb-2"
-                         style="background:#1c1c30; border:1px solid #2e2e50; border-radius:12px; cursor:pointer; transition:border-color .15s;"
-                         t-on-mouseenter="(ev) => ev.currentTarget.style.borderColor = '#4c4cff'"
-                         t-on-mouseleave="(ev) => ev.currentTarget.style.borderColor = '#2e2e50'"
-                         t-on-click="() => props.onSelect(wo)">
+    </div>
+</t>
 
-                        <div>
-                            <div class="fw-bold" t-esc="wo.name"/>
-                            <div class="text-secondary small mt-1"
-                                 t-esc="wo.product_id ? wo.product_id[1] : '—'"/>
-                            <t t-if="wo.production_id">
-                                <div class="text-secondary" style="font-size:.75rem;"
-                                     t-esc="'MO: ' + wo.production_id[1]"/>
-                            </t>
-                        </div>
-
-                        <div class="d-flex flex-column align-items-end gap-2">
-                            <span t-attf-class="#{stateBadge(wo.state)}" t-esc="stateLabel(wo.state)"/>
-                            <span class="text-secondary small">
-                                <t t-esc="wo.qty_produced"/> / <t t-esc="wo.qty_production"/> szt.
-                            </span>
-                            <t t-if="wo.date_planned_start">
-                                <span class="text-secondary" style="font-size:.72rem;"
-                                      t-esc="new Date(wo.date_planned_start).toLocaleString('pl-PL', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})"/>
-                            </t>
-                        </div>
-
-                    </div>
-                </t>
-            </div>
-        </div>
-    </t>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         WorkOrderDetail — start / stop + qty
-    ═══════════════════════════════════════════════════════════════════════════ -->
-    <t t-name="dnj_shopfloor.WorkOrderDetail" owl="1">
-        <div class="d-flex flex-column flex-grow-1 overflow-hidden">
-
-            <!-- toolbar -->
-            <div class="d-flex align-items-center gap-3 px-4 py-2 flex-shrink-0"
-                 style="background:#1c1c30; border-bottom:1px solid #2e2e50;">
-                <button class="btn btn-outline-secondary btn-sm" t-on-click="props.onBack">
-                    ← Wróć
-                </button>
-                <span class="fw-semibold" t-esc="props.workorder.name"/>
-
-                <!-- state badge -->
-                <span class="ms-auto">
-                    <t t-if="props.workorder.state === 'progress'">
-                        <span class="badge bg-primary fs-6">W TOKU</span>
-                    </t>
-                    <t t-elif="props.workorder.state === 'ready'">
-                        <span class="badge bg-success fs-6">GOTOWE</span>
-                    </t>
-                    <t t-else="">
-                        <span class="badge bg-secondary fs-6" t-esc="props.workorder.state"/>
-                    </t>
-                </span>
-            </div>
-
-            <!-- content -->
-            <div class="d-flex flex-column align-items-center justify-content-center flex-grow-1 p-4">
-                <div class="p-4 p-md-5"
-                     style="background:#1c1c30; border:1px solid #2e2e50; border-radius:20px; min-width:320px; max-width:520px; width:100%;">
-
-                    <!-- product -->
-                    <div class="text-secondary text-uppercase small mb-1" style="letter-spacing:.1em;">Produkt</div>
-                    <div class="fw-bold fs-4 mb-4"
-                         t-esc="props.workorder.product_id ? props.workorder.product_id[1] : '—'"/>
-
-                    <!-- production order -->
-                    <t t-if="props.workorder.production_id">
-                        <div class="text-secondary small mb-4"
-                             t-esc="'Zlecenie prod.: ' + props.workorder.production_id[1]"/>
-                    </t>
-
-                    <!-- qty counters -->
-                    <div class="d-flex justify-content-around mb-4">
-                        <div class="text-center">
-                            <div class="text-secondary small">Zlecono</div>
-                            <div class="fw-bold" style="font-size:2.4rem;" t-esc="props.workorder.qty_production"/>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-secondary small">Wykonano</div>
-                            <div class="fw-bold text-success" style="font-size:2.4rem;" t-esc="props.workorder.qty_produced"/>
-                        </div>
-                    </div>
-
-                    <!-- qty input (shown only when finishing) -->
-                    <t t-if="props.workorder.state === 'progress'">
-                        <div class="mb-4 text-center">
-                            <label class="text-secondary small d-block mb-2">Ilość do zarejestrowania</label>
-                            <input type="number" min="0" step="1"
-                                   class="form-control text-center fw-bold"
-                                   style="font-size:1.8rem; background:#12121f; border-color:#2e2e50; color:#e8e8f0; max-width:160px; margin:auto; border-radius:10px;"
-                                   t-att-value="qty.value"
-                                   t-on-change="onQtyChange"
-                            />
-                        </div>
-                    </t>
-
-                    <!-- action buttons -->
-                    <div class="d-flex gap-3 justify-content-center">
-                        <t t-if="props.workorder.state !== 'progress'">
-                            <button class="btn btn-success btn-lg px-5"
-                                    style="border-radius:12px; font-size:1.1rem;"
-                                    t-att-disabled="props.saving"
-                                    t-on-click="props.onStart">
-                                <t t-if="props.saving">
-                                    <span class="spinner-border spinner-border-sm me-2"/>
-                                </t>
-                                ▶ START
-                            </button>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     WorkcenterSelector
+═══════════════════════════════════════════════════════════════════════════════ -->
+<t t-name="dnj_shopfloor.WorkcenterSelector" owl="1">
+    <div class="flex-grow-1 overflow-auto p-4">
+        <h3 class="text-center mb-4 fw-light" style="color:#9090b0; letter-spacing:.1em;">
+            WYBIERZ MASZYNĘ
+        </h3>
+        <t t-if="!workcenters.length">
+            <div class="text-center text-secondary mt-5">Brak dostępnych maszyn</div>
+        </t>
+        <div class="row g-3 justify-content-center">
+            <t t-foreach="workcenters" t-as="wc" t-key="wc.id">
+                <div class="col-6 col-md-4 col-lg-3">
+                    <button class="btn w-100 h-100 d-flex flex-column align-items-center justify-content-center gap-2 p-4"
+                            style="min-height:130px; background:#1a1a2e; border:2px solid #252545; border-radius:14px; color:#e8e8f0; transition:all .15s;"
+                            t-on-mouseenter="(ev)=>{ev.currentTarget.style.borderColor='#6c8ebf';ev.currentTarget.style.background='#1e2240';}"
+                            t-on-mouseleave="(ev)=>{ev.currentTarget.style.borderColor='#252545';ev.currentTarget.style.background='#1a1a2e';}"
+                            t-on-click="()=>props.onSelect(wc)">
+                        <span class="fw-bold fs-5" t-esc="wc.name"/>
+                        <t t-if="wc.code">
+                            <span class="badge" style="background:#252545;color:#9090b0;" t-esc="wc.code"/>
                         </t>
-                        <t t-if="props.workorder.state === 'progress'">
-                            <button class="btn btn-danger btn-lg px-5"
-                                    style="border-radius:12px; font-size:1.1rem;"
-                                    t-att-disabled="props.saving"
-                                    t-on-click="onFinishClick">
-                                <t t-if="props.saving">
-                                    <span class="spinner-border spinner-border-sm me-2"/>
-                                </t>
-                                ■ STOP
-                            </button>
+                    </button>
+                </div>
+            </t>
+        </div>
+    </div>
+</t>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PinScreen — numeric PIN pad
+═══════════════════════════════════════════════════════════════════════════════ -->
+<t t-name="dnj_shopfloor.PinScreen" owl="1">
+    <div class="d-flex flex-column align-items-center justify-content-center flex-grow-1 gap-4">
+
+        <div class="text-center">
+            <div class="text-secondary small text-uppercase mb-1" style="letter-spacing:.1em;"
+                 t-esc="props.workcenter.name"/>
+            <div class="fw-semibold fs-4">Wprowadź PIN operatora</div>
+        </div>
+
+        <!-- PIN dots -->
+        <div class="d-flex gap-3">
+            <t t-foreach="[0,1,2,3,4,5]" t-as="i" t-key="i">
+                <div style="width:18px;height:18px;border-radius:50%;border:2px solid #6c8ebf;"
+                     t-attf-style="width:18px;height:18px;border-radius:50%;border:2px solid #6c8ebf;#{i &lt; state.pin.length ? 'background:#6c8ebf;' : ''}"/>
+            </t>
+        </div>
+
+        <!-- Error -->
+        <div t-if="state.error" class="text-danger fw-semibold" t-esc="state.error"/>
+        <div t-else="" style="height:1.5rem;"/>
+
+        <!-- Numpad -->
+        <div class="d-grid gap-2" style="grid-template-columns:repeat(3,1fr); width:280px;">
+            <t t-foreach="[1,2,3,4,5,6,7,8,9,'⌫',0,'✓']" t-as="key" t-key="key">
+                <button class="btn fw-bold fs-4"
+                        style="height:72px; border-radius:12px;"
+                        t-attf-style="height:72px;border-radius:12px;#{key === '✓' ? 'background:#2e6b2e;color:#fff;border:2px solid #3a9a3a;' : key === '⌫' ? 'background:#2e1a1a;color:#ff8080;border:2px solid #5a2a2a;' : 'background:#1a1a2e;color:#e8e8f0;border:2px solid #252545;'}"
+                        t-att-disabled="state.loading"
+                        t-on-click="()=>onKey(key)">
+                    <t t-if="state.loading and key === '✓'">
+                        <span class="spinner-border spinner-border-sm"/>
+                    </t>
+                    <t t-else="" t-esc="key"/>
+                </button>
+            </t>
+        </div>
+
+        <button class="btn btn-link text-secondary btn-sm" t-on-click="props.onBack">
+            ← Zmień maszynę
+        </button>
+    </div>
+</t>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     WorkOrderQueue — list of pending jobs
+═══════════════════════════════════════════════════════════════════════════════ -->
+<t t-name="dnj_shopfloor.WorkOrderQueue" owl="1">
+    <div class="d-flex flex-column flex-grow-1 overflow-hidden">
+
+        <!-- toolbar -->
+        <div class="d-flex align-items-center gap-3 px-4 py-2 flex-shrink-0"
+             style="background:#1a1a2e; border-bottom:1px solid #252545;">
+            <input t-ref="barcode"
+                   class="form-control form-control-sm"
+                   style="max-width:280px;background:#0f0f1a;border-color:#252545;color:#e8e8f0;"
+                   placeholder="🔍 Skanuj numer zlecenia + Enter"
+                   t-on-keydown="onBarcodeKey"/>
+            <button class="btn btn-outline-secondary btn-sm" t-on-click="props.onRefresh">↻</button>
+            <span class="ms-auto text-secondary small">
+                <t t-esc="workorders.length"/> zleceń
+            </span>
+        </div>
+
+        <!-- list -->
+        <div class="overflow-auto flex-grow-1 p-3">
+            <t t-if="!workorders.length">
+                <div class="text-center text-secondary mt-5 fs-5">
+                    Brak aktywnych zleceń
+                </div>
+            </t>
+            <t t-foreach="workorders" t-as="wo" t-key="wo.id">
+                <div class="d-flex align-items-center justify-content-between px-4 py-3 mb-2"
+                     style="background:#1a1a2e;border:1px solid #252545;border-radius:12px;cursor:pointer;"
+                     t-on-mouseenter="(ev)=>ev.currentTarget.style.borderColor='#6c8ebf'"
+                     t-on-mouseleave="(ev)=>ev.currentTarget.style.borderColor='#252545'"
+                     t-on-click="()=>props.onSelect(wo)">
+                    <div>
+                        <div class="fw-bold" t-esc="wo.name"/>
+                        <div class="text-secondary small" t-esc="wo.product_id ? wo.product_id[1] : ''"/>
+                        <div t-if="wo.production_id" class="small" style="color:#6c8ebf;"
+                             t-esc="'MO: ' + wo.production_id[1]"/>
+                    </div>
+                    <div class="d-flex flex-column align-items-end gap-2">
+                        <span t-attf-class="badge bg-#{stateCls(wo.state)}" t-esc="stateLabel(wo.state)"/>
+                        <!-- progress bar -->
+                        <div style="width:120px;">
+                            <div class="d-flex justify-content-between small text-secondary mb-1">
+                                <span t-esc="wo.qty_produced"/>
+                                <span t-esc="'/ ' + wo.qty_production"/>
+                            </div>
+                            <div class="progress" style="height:6px;background:#252545;border-radius:3px;">
+                                <div class="progress-bar bg-success"
+                                     t-attf-style="width:#{progressPct(wo)}%;"/>
+                            </div>
+                        </div>
+                        <t t-if="wo.date_planned_start">
+                            <span class="text-secondary" style="font-size:.72rem;"
+                                  t-esc="new Date(wo.date_planned_start).toLocaleString('pl-PL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})"/>
                         </t>
                     </div>
-
                 </div>
+            </t>
+        </div>
+    </div>
+</t>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     TestPrintScreen — test print qty + confirm
+═══════════════════════════════════════════════════════════════════════════════ -->
+<t t-name="dnj_shopfloor.TestPrintScreen" owl="1">
+    <div class="d-flex flex-column align-items-center justify-content-center flex-grow-1 p-4">
+        <div class="p-4 p-md-5 text-center"
+             style="background:#1a1a2e;border:1px solid #252545;border-radius:20px;max-width:480px;width:100%;">
+
+            <div class="mb-4">
+                <div class="badge mb-2" style="background:#2e2e50;color:#9090b0;">PRÓBNY DRUK</div>
+                <div class="fw-bold fs-4" t-esc="props.workorder.name"/>
+                <div class="text-secondary mt-1"
+                     t-esc="props.workorder.product_id ? props.workorder.product_id[1] : ''"/>
+            </div>
+
+            <div class="alert" style="background:#1e2c1e;border:1px solid #2e5c2e;border-radius:10px;color:#80c080;font-size:.9rem;">
+                Przed rozpoczęciem produkcji wykonaj próbny druk.<br/>
+                Podaj ilość arkuszy użytych do testu — zostanie ona odjęta ze stanu magazynowego.
+            </div>
+
+            <div class="my-4">
+                <label class="text-secondary small d-block mb-2">Ilość arkuszy próbnych</label>
+                <input type="number" min="0" step="1"
+                       class="form-control text-center fw-bold"
+                       style="font-size:2rem;background:#0f0f1a;border-color:#252545;color:#e8e8f0;max-width:160px;margin:auto;border-radius:10px;"
+                       t-att-value="qty.value"
+                       t-on-change="onChange"/>
+            </div>
+
+            <div class="d-flex gap-3 justify-content-center mt-3">
+                <button class="btn btn-outline-secondary px-4" t-on-click="props.onBack">
+                    ← Wróć
+                </button>
+                <button class="btn btn-success btn-lg px-5"
+                        style="border-radius:12px;"
+                        t-att-disabled="props.saving"
+                        t-on-click="()=>props.onConfirm(qty.value)">
+                    <t t-if="props.saving">
+                        <span class="spinner-border spinner-border-sm me-2"/>
+                    </t>
+                    Maszyna gotowa ✓
+                </button>
             </div>
         </div>
-    </t>
+    </div>
+</t>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     WorkScreen — active production (timer, progress, start/pause/stop)
+═══════════════════════════════════════════════════════════════════════════════ -->
+<t t-name="dnj_shopfloor.WorkScreen" owl="1">
+    <div class="d-flex flex-column align-items-center justify-content-center flex-grow-1 p-4">
+        <div class="text-center" style="max-width:560px;width:100%;">
+
+            <!-- WO info -->
+            <div class="mb-3">
+                <div class="fw-bold fs-4" t-esc="props.workorder.name"/>
+                <div class="text-secondary mt-1"
+                     t-esc="props.workorder.product_id ? props.workorder.product_id[1] : ''"/>
+            </div>
+
+            <!-- Timer -->
+            <div class="mb-3"
+                 t-attf-style="font-size:4rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.05em;color:#{props.sessionState === 'paused' ? '#ff8c00' : '#e8e8f0'};">
+                <t t-esc="fmtTimer(props.timerSec)"/>
+            </div>
+            <div t-if="props.sessionState === 'paused'" class="badge mb-3"
+                 style="background:#5c3a00;color:#ffb060;font-size:1rem;padding:.5rem 1.5rem;">
+                ⏸ PAUZA
+            </div>
+
+            <!-- Progress bar -->
+            <div class="mb-4 px-2">
+                <div class="d-flex justify-content-between small text-secondary mb-1">
+                    <span>Plan vs Fakt</span>
+                    <span><t t-esc="props.workorder.qty_produced"/> / <t t-esc="props.workorder.qty_production"/> szt. (<t t-esc="progressPct"/>%)</span>
+                </div>
+                <div class="progress" style="height:14px;background:#252545;border-radius:7px;">
+                    <div class="progress-bar"
+                         t-attf-class="progress-bar #{progressCls}"
+                         t-attf-style="width:#{progressPct}%;border-radius:7px;transition:width .5s;"/>
+                </div>
+            </div>
+
+            <!-- Qty inputs (visible during progress/paused) -->
+            <t t-if="props.sessionState === 'progress' or props.sessionState === 'paused'">
+                <div class="d-flex gap-4 justify-content-center mb-4">
+                    <div>
+                        <label class="text-secondary small d-block mb-1">Wykonano (szt.)</label>
+                        <input type="number" min="0"
+                               class="form-control text-center fw-bold"
+                               style="font-size:1.5rem;background:#0f0f1a;border-color:#252545;color:#e8e8f0;width:130px;border-radius:10px;"
+                               t-att-value="finish.qty"
+                               t-on-change="onQtyChange"/>
+                    </div>
+                    <div>
+                        <label class="text-secondary small d-block mb-1">Braki (szt.)</label>
+                        <input type="number" min="0"
+                               class="form-control text-center fw-bold"
+                               style="font-size:1.5rem;background:#0f0f1a;border-color:#252545;color:#ff8080;width:130px;border-radius:10px;"
+                               t-att-value="finish.scrap"
+                               t-on-change="onScrapChange"/>
+                    </div>
+                </div>
+            </t>
+
+            <!-- Action buttons -->
+            <div class="d-flex gap-3 justify-content-center">
+
+                <!-- START (before work begins) -->
+                <t t-if="props.sessionState === 'confirmed'">
+                    <button class="btn btn-success btn-lg px-5" style="border-radius:12px;font-size:1.1rem;"
+                            t-att-disabled="props.saving"
+                            t-on-click="props.onStart">
+                        <t t-if="props.saving"><span class="spinner-border spinner-border-sm me-2"/></t>
+                        ▶ START
+                    </button>
+                </t>
+
+                <!-- PAUSE (during work) -->
+                <t t-if="props.sessionState === 'progress'">
+                    <button class="btn btn-warning btn-lg px-4" style="border-radius:12px;"
+                            t-att-disabled="props.saving"
+                            t-on-click="props.onPause">
+                        ⏸ Pauza
+                    </button>
+                    <button class="btn btn-danger btn-lg px-4" style="border-radius:12px;"
+                            t-att-disabled="props.saving"
+                            t-on-click="onStop">
+                        <t t-if="props.saving"><span class="spinner-border spinner-border-sm me-2"/></t>
+                        ■ STOP
+                    </button>
+                </t>
+
+                <!-- RESUME + STOP (during pause) -->
+                <t t-if="props.sessionState === 'paused'">
+                    <button class="btn btn-success btn-lg px-4" style="border-radius:12px;"
+                            t-att-disabled="props.saving"
+                            t-on-click="props.onResume">
+                        ▶ Wznów
+                    </button>
+                    <button class="btn btn-danger btn-lg px-4" style="border-radius:12px;"
+                            t-att-disabled="props.saving"
+                            t-on-click="onStop">
+                        ■ STOP
+                    </button>
+                </t>
+
+            </div>
+        </div>
+    </div>
+</t>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PauseModal — reason selection overlay
+═══════════════════════════════════════════════════════════════════════════════ -->
+<t t-name="dnj_shopfloor.PauseModal" owl="1">
+    <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+         style="background:rgba(0,0,0,.7);z-index:9999;">
+        <div class="p-4 text-center"
+             style="background:#1a1a2e;border:1px solid #252545;border-radius:20px;min-width:320px;">
+            <div class="fw-bold fs-5 mb-4">Powód pauzy</div>
+            <div class="d-flex flex-column gap-2">
+                <t t-foreach="REASONS" t-as="r" t-key="r.key">
+                    <button class="btn btn-outline-warning btn-lg"
+                            style="border-radius:12px;text-align:left;padding:.75rem 1.5rem;"
+                            t-on-click="()=>props.onSelect(r.key)"
+                            t-esc="r.label"/>
+                </t>
+            </div>
+            <button class="btn btn-link text-secondary mt-3" t-on-click="props.onCancel">Anuluj</button>
+        </div>
+    </div>
+</t>
 
 </templates>
