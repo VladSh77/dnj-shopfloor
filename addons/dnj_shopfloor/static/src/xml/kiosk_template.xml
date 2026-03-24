@@ -101,11 +101,11 @@
         <h3 class="text-center mb-4 fw-light" style="color:#9090b0; letter-spacing:.1em;">
             WYBIERZ MASZYNĘ
         </h3>
-        <t t-if="!workcenters.length">
+        <t t-if="!props.workcenters.length">
             <div class="text-center text-secondary mt-5">Brak dostępnych maszyn</div>
         </t>
         <div class="row g-3 justify-content-center">
-            <t t-foreach="workcenters" t-as="wc" t-key="wc.id">
+            <t t-foreach="props.workcenters" t-as="wc" t-key="wc.id">
                 <div class="col-6 col-md-4 col-lg-3">
                     <button class="btn w-100 h-100 d-flex flex-column align-items-center justify-content-center gap-2 p-4"
                             style="min-height:130px; background:#1a1a2e; border:2px solid #252545; border-radius:14px; color:#e8e8f0; transition:all .15s;"
@@ -185,18 +185,18 @@
                    t-on-keydown="onBarcodeKey"/>
             <button class="btn btn-outline-secondary btn-sm" t-on-click="props.onRefresh">↻</button>
             <span class="ms-auto text-secondary small">
-                <t t-esc="workorders.length"/> zleceń
+                <t t-esc="props.workorders.length"/> zleceń
             </span>
         </div>
 
         <!-- list -->
         <div class="overflow-auto flex-grow-1 p-3">
-            <t t-if="!workorders.length">
+            <t t-if="!props.workorders.length">
                 <div class="text-center text-secondary mt-5 fs-5">
                     Brak aktywnych zleceń
                 </div>
             </t>
-            <t t-foreach="workorders" t-as="wo" t-key="wo.id">
+            <t t-foreach="props.workorders" t-as="wo" t-key="wo.id">
                 <div class="d-flex align-items-center justify-content-between px-4 py-3 mb-2"
                      style="background:#1a1a2e;border:1px solid #252545;border-radius:12px;cursor:pointer;"
                      t-on-mouseenter="(ev)=>ev.currentTarget.style.borderColor='#6c8ebf'"
