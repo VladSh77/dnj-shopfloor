@@ -9,12 +9,12 @@
         <field name="name">dnj.operator.list</field>
         <field name="model">dnj.operator</field>
         <field name="arch" type="xml">
-            <list string="Operators" decoration-muted="active == False">
+            <list string="Operators">
                 <field name="name"/>
                 <field name="workcenter_ids" widget="many2many_tags"/>
                 <field name="session_count"/>
                 <field name="last_session_date"/>
-                <field name="active" optional="hide"/>
+                <field name="active"/>
             </list>
         </field>
     </record>
