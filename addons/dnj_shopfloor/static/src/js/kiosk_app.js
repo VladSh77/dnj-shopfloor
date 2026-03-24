@@ -11,6 +11,32 @@ import { registry } from "@web/core/registry";
 import { Component, useState, onWillUnmount, useRef, onMounted } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 
+// ─── session persistence ──────────────────────────────────────────────────────
+
+const STORAGE_KEY = 'dnj_kiosk_session';
+
+function saveSession(data) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { /* quota */ }
+}
+
+function clearSession() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+}
+
+function loadSession() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+}
+
+function calcElapsedSec(isoStart, pauseMinutes) {
+    if (!isoStart) return 0;
+    const start  = new Date(isoStart.endsWith('Z') ? isoStart : isoStart + 'Z').getTime();
+    const paused = (pauseMinutes || 0) * 60 * 1000;
+    return Math.max(0, Math.floor((Date.now() - start - paused) / 1000));
+}
+
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function fmtTime(seconds) {
@@ -201,7 +227,43 @@ export class DnjShopfloorKiosk extends Component {
         this._timerInterval = null;
 
         onWillUnmount(() => this._stopTimer());
-        this._loadWorkcenters();
+        this._tryRestoreSession();
+    }
+
+    // ── session restore ───────────────────────────────────────────────────────
+
+    async _tryRestoreSession() {
+        const saved = loadSession();
+        if (!saved) { this._loadWorkcenters(); return; }
+        try {
+            const status = await this.rpc('/dnj_shopfloor/session/status', { session_id: saved.sessionId });
+            if (!status.found || status.state === 'done') {
+                clearSession(); this._loadWorkcenters(); return;
+            }
+            this.state.sessionId    = saved.sessionId;
+            this.state.workcenter   = saved.workcenter;
+            this.state.operator     = saved.operator;
+            this.state.workorder    = saved.workorder;
+            this.state.sessionState = status.state;
+
+            if (status.state === 'progress' || status.state === 'paused') {
+                this.state.timerSec = calcElapsedSec(status.work_start_time, status.pause_minutes);
+                this.state.screen = 'work';
+                if (status.state === 'progress') this._startTimer();
+            } else {
+                await this._loadWorkorders();
+                this.state.screen = 'queue';
+            }
+        } catch { clearSession(); this._loadWorkcenters(); }
+    }
+
+    _persistSession() {
+        saveSession({
+            sessionId: this.state.sessionId,
+            workcenter: this.state.workcenter,
+            operator:   this.state.operator,
+            workorder:  this.state.workorder,
+        });
     }
 
     // ── data ──────────────────────────────────────────────────────────────────
@@ -243,6 +305,7 @@ export class DnjShopfloorKiosk extends Component {
             this.state.sessionState = res.state;
             await this._loadWorkorders();
             this.state.screen = "queue";
+            this._persistSession();
             this._ok(`Witaj, ${operator.name}!`);
         } catch { this._err("Błąd tworzenia sesji"); }
         finally { this.state.saving = false; }
@@ -251,6 +314,7 @@ export class DnjShopfloorKiosk extends Component {
     async selectWorkorder(wo) {
         this.state.workorder = wo;
         await this._sessionAction('select_workorder', { workorder_id: wo.id });
+        this._persistSession();
         this.state.screen = "test_print";
     }
 
@@ -270,6 +334,7 @@ export class DnjShopfloorKiosk extends Component {
             await this._sessionAction('start_work');
             this.state.sessionState = 'progress';
             this._startTimer();
+            this._persistSession();
             this._ok("Praca rozpoczęta!");
         } catch (e) { this._err(e); }
         finally { this.state.saving = false; }
@@ -281,8 +346,8 @@ export class DnjShopfloorKiosk extends Component {
         try {
             await this._sessionAction('pause', { reason });
             this.state.sessionState = 'paused';
-            this.state.pausedMs += 0;             // mark pause start
             this._stopTimer();
+            this._persistSession();
         } catch (e) { this._err(e); }
         finally { this.state.saving = false; }
     }
@@ -293,6 +358,7 @@ export class DnjShopfloorKiosk extends Component {
             await this._sessionAction('resume');
             this.state.sessionState = 'progress';
             this._startTimer();
+            this._persistSession();
             this._ok("Praca wznowiona!");
         } catch (e) { this._err(e); }
         finally { this.state.saving = false; }
@@ -303,6 +369,7 @@ export class DnjShopfloorKiosk extends Component {
         try {
             await this._sessionAction('stop', { qty_produced: qtyProduced, qty_scrap: qtyScrap });
             this._stopTimer();
+            clearSession();
             this._ok("Zlecenie zakończone!");
             await this._loadWorkorders();
             this.state.screen = "queue";
@@ -319,6 +386,7 @@ export class DnjShopfloorKiosk extends Component {
         } catch { /* ignore */ }
         finally { this.state.saving = false; }
         this._stopTimer();
+        clearSession();
         this.state.screen = "pin";
         this.state.operator = null;
         this.state.sessionId = null;

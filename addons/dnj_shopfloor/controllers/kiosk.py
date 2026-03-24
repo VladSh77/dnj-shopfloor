@@ -139,3 +139,68 @@ class DnjKioskController(http.Controller):
             'qty_produced': session.qty_produced,
             'qty_scrap': session.qty_scrap,
         }
+
+    # ── auto-login entry point ─────────────────────────────────────────────────
+
+    @http.route('/kiosk', type='http', auth='none', csrf=False)
+    def kiosk_entry(self):
+        """
+        Tablet entry point — auto-login as the shared kiosk Odoo user and
+        redirect to the fullscreen kiosk action.  Credentials are stored in
+        ir.config_parameter so they can be changed without code changes:
+          dnj_shopfloor.kiosk_login    (default: kiosk)
+          dnj_shopfloor.kiosk_password (default: Kiosk2024)
+        """
+        if not request.session.uid:
+            ICP = request.env['ir.config_parameter'].sudo()
+            login    = ICP.get_param('dnj_shopfloor.kiosk_login',    'kiosk')
+            password = ICP.get_param('dnj_shopfloor.kiosk_password', 'Kiosk2024')
+            request.session.authenticate(request.db, login, password)
+
+        return request.make_response(
+            """<!DOCTYPE html><html><head><meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <title>DNJ Kiosk</title></head><body>
+            <script>window.location.replace('/web#action=dnj_shopfloor.action_dnj_shopfloor_kiosk');</script>
+            </body></html>""",
+            headers=[('Content-Type', 'text/html; charset=utf-8')]
+        )
+
+    # ── manager dashboard data ─────────────────────────────────────────────────
+
+    @http.route('/dnj_shopfloor/dashboard', type='json', auth='user')
+    def dashboard(self):
+        """Return all workcenters with their live session data."""
+        env = request.env
+        workcenters = env['mrp.workcenter'].sudo().search(
+            [('active', '=', True)], order='name')
+        result = []
+        for wc in workcenters:
+            session = env['dnj.kiosk.session'].sudo().search([
+                ('workcenter_id', '=', wc.id),
+                ('state', 'not in', ['done']),
+            ], limit=1, order='create_date desc')
+
+            sess_data = None
+            if session:
+                pause_min = sum(session.pause_ids.mapped('duration_minutes'))
+                wo = session.workorder_id
+                sess_data = {
+                    'id':             session.id,
+                    'state':          session.state,
+                    'operator':       session.operator_id.name,
+                    'workorder':      wo.name if wo else '',
+                    'product':        wo.product_id.display_name if wo and wo.product_id else '',
+                    'qty_produced':   session.qty_produced,
+                    'qty_scrap':      session.qty_scrap,
+                    'qty_production': wo.qty_production if wo else 0,
+                    'work_start':     session.work_start_time.isoformat() if session.work_start_time else None,
+                    'pause_minutes':  pause_min,
+                }
+            result.append({
+                'id':      wc.id,
+                'name':    wc.name,
+                'code':    wc.code or '',
+                'session': sess_data,
+            })
+        return result

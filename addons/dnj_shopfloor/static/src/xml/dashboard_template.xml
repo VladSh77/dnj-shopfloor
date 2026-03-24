@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<!-- ══════════════════════════════════════════════════════════════════
+     Dashboard root
+══════════════════════════════════════════════════════════════════ -->
+<t t-name="dnj_shopfloor.Dashboard" owl="1">
+    <div style="min-height:100vh;background:#111209;color:#E8E6D0;font-family:'Segoe UI',system-ui,sans-serif;">
+
+        <!-- Header -->
+        <div class="d-flex align-items-center px-4"
+             style="height:56px;background:#1C1C12;border-bottom:2px solid #C9A227;">
+            <img src="https://dnj.pl/img/logo.png" alt="DNJ"
+                 style="height:32px;margin-right:10px;" onerror="this.style.display='none'"/>
+            <span style="color:#C9A227;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.95rem;">
+                Dashboard Produkcji
+            </span>
+
+            <!-- summary badges -->
+            <div class="d-flex gap-3 ms-4">
+                <span class="badge px-3 py-2"
+                      style="background:#1e4020;color:#60c060;font-size:.8rem;border-radius:8px;">
+                    ▶ Praca: <t t-esc="activeCount"/>
+                </span>
+                <span class="badge px-3 py-2"
+                      style="background:#4A3A00;color:#C9A227;font-size:.8rem;border-radius:8px;">
+                    ⏸ Pauza: <t t-esc="pausedCount"/>
+                </span>
+                <span class="badge px-3 py-2"
+                      style="background:#222218;color:#888870;font-size:.8rem;border-radius:8px;">
+                    ○ Wolna: <t t-esc="idleCount"/>
+                </span>
+            </div>
+
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <span t-if="state.lastUpdate"
+                      style="color:#555540;font-size:.75rem;">
+                    Aktualizacja: <t t-esc="state.lastUpdate"/>
+                </span>
+                <span style="color:#333320;font-size:.72rem;">auto-refresh 30s</span>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <t t-if="state.loading">
+            <div class="d-flex justify-content-center align-items-center"
+                 style="height:60vh;">
+                <div class="spinner-border"
+                     style="width:3rem;height:3rem;color:#C9A227;border-width:3px;"/>
+            </div>
+        </t>
+
+        <!-- Machine grid -->
+        <div t-else="" class="p-4">
+            <div class="row g-3">
+                <t t-foreach="state.machines" t-as="wc" t-key="wc.id">
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <MachineCard wc="wc" tick="state.tick"/>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </div>
+</t>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     MachineCard
+══════════════════════════════════════════════════════════════════ -->
+<t t-name="dnj_shopfloor.MachineCard" owl="1">
+    <div class="h-100"
+         t-attf-style="background:#1C1C12;border:2px solid #{isActive ? '#2D5C2D' : isPaused ? '#7A6000' : '#333320'};border-radius:16px;overflow:hidden;transition:border-color .4s;">
+
+        <!-- Machine name bar -->
+        <div class="d-flex align-items-center justify-content-between px-3 py-2"
+             t-attf-style="background:#{statusColor};border-bottom:1px solid #333320;">
+            <div>
+                <span class="fw-bold" style="font-size:1rem;" t-esc="props.wc.name"/>
+                <t t-if="props.wc.code">
+                    <span class="ms-2" style="font-size:.72rem;color:#C9A227;letter-spacing:.1em;"
+                          t-esc="props.wc.code"/>
+                </t>
+            </div>
+            <span class="badge px-3 py-1 fw-semibold"
+                  t-attf-style="background:rgba(0,0,0,.3);color:#{statusTextColor};font-size:.78rem;border-radius:8px;"
+                  t-esc="statusLabel"/>
+        </div>
+
+        <!-- Body -->
+        <div class="p-3">
+            <t t-if="!sess">
+                <!-- Idle machine -->
+                <div class="text-center py-4" style="color:#555540;">
+                    <div style="font-size:2.5rem;margin-bottom:.5rem;">⚙</div>
+                    <div style="font-size:.9rem;">Maszyna wolna</div>
+                </div>
+            </t>
+            <t t-else="">
+                <!-- Operator + work order info -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div style="font-size:.72rem;color:#888870;text-transform:uppercase;letter-spacing:.08em;">
+                            Operator
+                        </div>
+                        <div class="fw-semibold" style="color:#C9A227;" t-esc="sess.operator"/>
+                    </div>
+                    <t t-if="sess.workorder">
+                        <div class="text-end">
+                            <div style="font-size:.72rem;color:#888870;text-transform:uppercase;letter-spacing:.08em;">
+                                Zlecenie
+                            </div>
+                            <div class="fw-semibold" style="font-size:.9rem;" t-esc="sess.workorder"/>
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Product -->
+                <t t-if="sess.product">
+                    <div class="mb-3 px-2 py-1"
+                         style="background:#222218;border-radius:8px;font-size:.85rem;color:#E8E6D0;"
+                         t-esc="sess.product"/>
+                </t>
+
+                <!-- Timer (only during active work) -->
+                <t t-if="isActive">
+                    <div class="text-center mb-3"
+                         style="font-size:2.8rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:#E8E6D0;">
+                        <t t-esc="fmtTime(timerSec)"/>
+                    </div>
+                </t>
+                <t t-elif="isPaused">
+                    <div class="text-center mb-3 py-2"
+                         style="background:#2A2200;border-radius:10px;color:#C9A227;font-weight:600;">
+                        ⏸ PAUZA
+                    </div>
+                </t>
+
+                <!-- Progress bar -->
+                <t t-if="sess.qty_production">
+                    <div class="mb-1 d-flex justify-content-between"
+                         style="font-size:.75rem;color:#888870;">
+                        <span>Wykonano</span>
+                        <span>
+                            <t t-esc="sess.qty_produced"/> / <t t-esc="sess.qty_production"/> szt.
+                            (<t t-esc="progressPct"/>%)
+                        </span>
+                    </div>
+                    <div style="height:10px;background:#333320;border-radius:5px;overflow:hidden;margin-bottom:.75rem;">
+                        <div t-attf-style="width:#{progressPct}%;height:100%;background:#{barColor};border-radius:5px;transition:width .5s;"/>
+                    </div>
+                </t>
+
+                <!-- Scrap -->
+                <t t-if="sess.qty_scrap">
+                    <div style="font-size:.8rem;color:#e08080;">
+                        Braki: <t t-esc="sess.qty_scrap"/> szt.
+                    </div>
+                </t>
+            </t>
+        </div>
+    </div>
+</t>
+
+</templates>
