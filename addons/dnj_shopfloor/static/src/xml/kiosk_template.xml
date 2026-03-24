@@ -357,40 +357,42 @@
             </div>
 
             <!-- TIME BAR — główny wskaźnik motywacyjny -->
-            <t t-if="plannedSec">
-                <div class="mb-3 px-2">
-                    <div class="d-flex justify-content-between align-items-baseline mb-2">
-                        <span style="font-size:.72rem;color:#888870;text-transform:uppercase;letter-spacing:.1em;">
-                            Czas produkcji
-                        </span>
-                        <span t-attf-style="font-size:.95rem;font-weight:700;color:#{timeBarColor};">
-                            <t t-esc="fmtTimer(props.timerSec)"/>
-                            <span style="margin:0 4px;">/</span><t t-esc="fmtTimer(plannedSec)"/>
-                            <span style="margin-left:4px;">(<t t-esc="timePct"/>%)</span>
-                        </span>
-                    </div>
-                    <div style="height:28px;background:#222218;border-radius:14px;overflow:hidden;">
-                        <div t-attf-style="width:#{timeBarWidth}%;height:100%;background:#{timeBarColor};border-radius:14px;transition:width 1s;"/>
-                    </div>
-                    <t t-if="isOvertime">
-                        <div class="mt-2 fw-bold text-center"
-                             style="color:#c03030;font-size:1.05rem;letter-spacing:.04em;">
-                            ⚠ Przekroczono: +<t t-esc="fmtTimer(overtimeSec)"/>
-                        </div>
-                    </t>
+            <div class="mb-4 px-2">
+                <div class="d-flex justify-content-between align-items-baseline mb-2">
+                    <span style="font-size:.8rem;color:#888870;text-transform:uppercase;letter-spacing:.1em;">
+                        Czas produkcji
+                    </span>
+                    <span t-attf-style="font-size:1rem;font-weight:700;color:#{timeBarColor};">
+                        <t t-esc="fmtTimer(props.timerSec)"/>
+                        <t t-if="plannedSec">
+                            <span style="margin:0 6px;color:#555540;">/</span>
+                            <t t-esc="fmtTimer(plannedSec)"/>
+                            <span style="margin-left:6px;">(<t t-esc="timePct"/>%)</span>
+                        </t>
+                    </span>
                 </div>
-            </t>
+                <!-- bar track -->
+                <div style="height:44px;background:#222218;border-radius:22px;overflow:hidden;position:relative;">
+                    <div t-attf-style="width:#{timeBarWidth}%;height:100%;background:#{timeBarColor};border-radius:22px;transition:width 1s;min-width:#{props.timerSec > 0 ? 8 : 0}px;"/>
+                </div>
+                <t t-if="isOvertime">
+                    <div class="mt-2 fw-bold text-center"
+                         style="color:#c03030;font-size:1.1rem;letter-spacing:.04em;">
+                        ⚠ Przekroczono: +<t t-esc="fmtTimer(overtimeSec)"/>
+                    </div>
+                </t>
+            </div>
 
             <!-- Quantity bar (secondary) -->
             <t t-if="props.workorder.qty_production">
                 <div class="mb-4 px-2">
                     <div class="d-flex justify-content-between mb-1"
-                         style="font-size:.75rem;color:#888870;">
+                         style="font-size:.8rem;color:#888870;">
                         <span>Wykonano</span>
                         <span><t t-esc="props.workorder.qty_produced"/> / <t t-esc="props.workorder.qty_production"/> szt. (<t t-esc="progressPct"/>%)</span>
                     </div>
-                    <div style="height:10px;background:#333320;border-radius:5px;overflow:hidden;">
-                        <div t-attf-style="width:#{progressPct}%;height:100%;background:#1e3050;border-radius:5px;transition:width .5s;"/>
+                    <div style="height:16px;background:#333320;border-radius:8px;overflow:hidden;">
+                        <div t-attf-style="width:#{progressPct}%;height:100%;background:#1e3050;border-radius:8px;transition:width .5s;"/>
                     </div>
                 </div>
             </t>

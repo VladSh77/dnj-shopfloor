@@ -177,7 +177,7 @@ class WorkScreen extends Component {
     // ── time bar ──────────────────────────────────────────────────────────────
     get plannedSec()   { return (this.props.workorder.duration_expected || 0) * 60; }
     get timePct()      { return this.plannedSec ? Math.round((this.props.timerSec / this.plannedSec) * 100) : 0; }
-    get timeBarWidth() { return Math.min(100, this.timePct); }
+    get timeBarWidth() { return this.plannedSec ? Math.min(100, this.timePct) : 100; }
     get isOvertime()   { return this.plannedSec > 0 && this.props.timerSec > this.plannedSec; }
     get overtimeSec()  { return Math.max(0, this.props.timerSec - this.plannedSec); }
     get timeBarColor() {
