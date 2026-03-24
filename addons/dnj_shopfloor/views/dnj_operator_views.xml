@@ -99,17 +99,12 @@
         <field name="arch" type="xml">
             <tree string="Sessions"
                   decoration-success="state == 'progress'"
-                  decoration-warning="state == 'paused'"
-                  decoration-bf="state == 'progress'">
+                  decoration-warning="state == 'paused'">
                 <field name="start_time"/>
                 <field name="operator_id"/>
                 <field name="workcenter_id"/>
                 <field name="workorder_id"/>
-                <field name="state" widget="badge"
-                       decoration-success="state == 'progress'"
-                       decoration-warning="state in ('paused','test_print')"
-                       decoration-info="state in ('active','confirmed')"
-                       decoration-secondary="state == 'done'"/>
+                <field name="state"/>
                 <field name="duration_total" string="Total (min)"/>
                 <field name="duration_net" string="Net (min)"/>
                 <field name="qty_produced"/>
@@ -194,17 +189,15 @@
         <field name="name">dnj.workorder.log.tree</field>
         <field name="model">dnj.workorder.log</field>
         <field name="arch" type="xml">
-            <tree string="Event Log" create="false" delete="false" edit="false">
+            <tree string="Event Log" create="false" delete="false" edit="false"
+                  decoration-success="event_type in ('start','confirm_ready')"
+                  decoration-warning="event_type in ('pause','test_print')"
+                  decoration-danger="event_type in ('scrap','error')">
                 <field name="timestamp"/>
                 <field name="operator_id"/>
                 <field name="workcenter_id"/>
                 <field name="workorder_id"/>
-                <field name="event_type" widget="badge"
-                       decoration-success="event_type in ('start','confirm_ready')"
-                       decoration-warning="event_type in ('pause','test_print')"
-                       decoration-danger="event_type in ('scrap','error')"
-                       decoration-info="event_type in ('login','resume')"
-                       decoration-secondary="event_type in ('stop','logout')"/>
+                <field name="event_type"/>
                 <field name="qty"/>
                 <field name="note"/>
             </tree>
