@@ -97,7 +97,7 @@
                         operator="state.operator"
                         workcenter="state.workcenter"
                         sessionState="state.sessionState"
-                        timerSec="state.timerSec"
+                        timerSec="timerSec"
                         saving="state.saving"
                         onPause="() => state.showPauseModal = true"
                         onResume.bind="resumeWork"

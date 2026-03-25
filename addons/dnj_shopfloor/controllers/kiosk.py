@@ -30,8 +30,9 @@ class DnjKioskController(http.Controller):
     def session_open(self, operator_id: int, workcenter_id: int):
         """Open a new kiosk session for the authenticated operator."""
         Session = request.env['dnj.kiosk.session'].sudo()
+        # Close ALL non-done sessions for this machine (any operator)
+        # so the dashboard never shows a ghost session from a previous login
         old = Session.search([
-            ('operator_id', '=', operator_id),
             ('workcenter_id', '=', workcenter_id),
             ('state', 'not in', ['done']),
         ])

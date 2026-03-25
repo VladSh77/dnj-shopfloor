@@ -30,13 +30,6 @@ function loadSession() {
     } catch { return null; }
 }
 
-function calcElapsedSec(isoStart, pauseMinutes) {
-    if (!isoStart) return 0;
-    const start  = new Date(isoStart.endsWith('Z') ? isoStart : isoStart + 'Z').getTime();
-    const paused = (pauseMinutes || 0) * 60 * 1000;
-    return Math.max(0, Math.floor((Date.now() - start - paused) / 1000));
-}
-
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function fmtTime(seconds) {
@@ -229,15 +222,21 @@ export class DnjShopfloorKiosk extends Component {
             loading: false,
             saving: false,
             showPauseModal: false,
-            timerSec: 0,
-            workStartTs: null,      // JS timestamp (ms)
-            pausedMs: 0,            // total paused milliseconds
+            workStartTs: null,  // ms timestamp when START was pressed (wall-clock anchor)
+            tick: 0,            // increments every second to force timer re-render
         });
 
         this._timerInterval = null;
 
         onWillUnmount(() => this._stopTimer());
         this._tryRestoreSession();
+    }
+
+    // Computed — always wall-clock from START, never stops during pause
+    get timerSec() {
+        this.state.tick;  // reactive dependency — OWL re-evaluates every second
+        if (!this.state.workStartTs) return 0;
+        return Math.floor((Date.now() - this.state.workStartTs) / 1000);
     }
 
     // ── session restore ───────────────────────────────────────────────────────
@@ -257,10 +256,13 @@ export class DnjShopfloorKiosk extends Component {
             this.state.sessionState = status.state;
 
             if (status.state === 'progress' || status.state === 'paused') {
-                // Timer = total wall-clock time from START (pauses do NOT stop it)
-                this.state.timerSec = calcElapsedSec(status.work_start_time, 0);
+                // Reconstruct workStartTs from server timestamp
+                const ts = status.work_start_time;
+                this.state.workStartTs = ts
+                    ? new Date(ts.endsWith('Z') ? ts : ts + 'Z').getTime()
+                    : null;
                 this.state.screen = 'work';
-                this._startTimer();  // always running — pause does not stop the clock
+                this._startTimer();  // tick keeps running — pause does NOT stop the clock
             } else {
                 await this._loadWorkorders();
                 this.state.screen = 'queue';
@@ -343,6 +345,7 @@ export class DnjShopfloorKiosk extends Component {
         this.state.saving = true;
         try {
             await this._sessionAction('start_work');
+            this.state.workStartTs = Date.now();  // anchor for wall-clock timer
             this.state.sessionState = 'progress';
             this._startTimer();
             this._persistSession();
@@ -380,6 +383,7 @@ export class DnjShopfloorKiosk extends Component {
         try {
             await this._sessionAction('stop', { qty_produced: qtyProduced, qty_scrap: qtyScrap });
             this._stopTimer();
+            this.state.workStartTs = null;
             clearSession();
             this._ok("Zlecenie zakończone!");
             await this._loadWorkorders();
@@ -397,24 +401,21 @@ export class DnjShopfloorKiosk extends Component {
         } catch { /* ignore */ }
         finally { this.state.saving = false; }
         this._stopTimer();
+        this.state.workStartTs = null;
         clearSession();
         this.state.screen = "pin";
         this.state.operator = null;
         this.state.sessionId = null;
         this.state.workorder = null;
         this.state.workorders = [];
-        this.state.timerSec = 0;
     }
 
     // ── timer ─────────────────────────────────────────────────────────────────
 
     _startTimer() {
         this._stopTimer();
-        const base = this.state.timerSec;
-        const start = Date.now() - base * 1000;
-        this._timerInterval = setInterval(() => {
-            this.state.timerSec = Math.floor((Date.now() - start) / 1000);
-        }, 1000);
+        // Increment tick every second — timerSec getter re-computes from workStartTs
+        this._timerInterval = setInterval(() => { this.state.tick++; }, 1000);
     }
 
     _stopTimer() {
