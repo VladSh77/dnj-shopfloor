@@ -16,7 +16,8 @@ Odoo: 17.0 Community
 | Функція | Опис |
 |---|---|
 | **Кіоск для оператора** | Планшет на виробничій лінії. PIN-вхід, черга Work Orders, тест-друк, таймер, пауза, стоп |
-| **Менеджерський дашборд** | Живий статус усіх машин: хто працює, скільки часу, прогрес, пауза |
+| **Менеджерський дашборд** | Живий статус усіх машин: хто працює, скільки часу, прогрес, пауза. Клікабельні картки машин |
+| **Деталі машини** | Статистика за сьогодні, тижневі оператори, остання 10 сесій, статус Modbus, заглушки паперу/фарби |
 | **Моніторинг машин** | Ping-статус (online/offline) кожної машини + Modbus TCP (швидкість, лічильник) |
 | **Event Log** | Повна хронологія подій: login, test_print, start, pause, resume, stop, logout |
 | **Session persistence** | Кіоск відновлює сесію після перезавантаження сторінки/планшету |
@@ -43,7 +44,7 @@ dnj-shopfloor/
 │   │   ├── dnj_workorder_log.py   # Event Log
 │   │   └── dnj_machine_status.py  # Моніторинг мережі + Modbus
 │   ├── controllers/
-│   │   └── kiosk.py               # 9 JSON-RPC ендпоінтів
+│   │   └── kiosk.py               # 11 JSON-RPC ендпоінтів
 │   ├── views/
 │   │   ├── kiosk_views.xml        # Кіоск + дашборд actions
 │   │   └── dnj_operator_views.xml # Оператори, сесії, логи, Machine Monitoring
@@ -205,7 +206,7 @@ docker compose up -d --build
 |---|---|
 | `GET /kiosk` | Авто-вхід планшету |
 | `POST /dnj_shopfloor/authenticate` | Перевірка PIN оператора |
-| `POST /dnj_shopfloor/session/open` | Відкрити сесію |
+| `POST /dnj_shopfloor/session/open` | Відкрити сесію (закриває всі попередні сесії на машині) |
 | `POST /dnj_shopfloor/session/action` | Дії: start, pause, resume, stop, logout |
 | `POST /dnj_shopfloor/session/status` | Поточний стан сесії |
 | `POST /dnj_shopfloor/workorders` | Список Work Orders для машини |
@@ -213,6 +214,7 @@ docker compose up -d --build
 | `POST /dnj_shopfloor/dashboard` | Живий статус всіх машин (для дашборду) |
 | `POST /dnj_shopfloor/machine/config` | Список машин з IP для bridge |
 | `POST /dnj_shopfloor/machine/heartbeat` | Bridge надсилає результати пінгів |
+| `POST /dnj_shopfloor/machine/stats` | Детальна статистика машини (для панелі деталей) |
 
 Детально: [addons/dnj_shopfloor/TECHNICAL.md](addons/dnj_shopfloor/TECHNICAL.md)
 

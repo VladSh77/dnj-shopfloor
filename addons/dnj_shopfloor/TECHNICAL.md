@@ -26,6 +26,7 @@ OWL App: DnjShopfloorKiosk ◄────────────────�
 
 OWL App: DnjShopfloorDashboard
   MachineCard               ◄──► /dashboard (incl. machine_status)
+  MachineDetailPanel        ◄──► /machine/stats
                                               ▲
                                               │ heartbeat every 30s
                                   /machine/heartbeat ◄─── bridge.py (Docker)
@@ -86,8 +87,15 @@ One row per operator login on one machine.
 | `qty_scrap`        | Float     |                                                |
 | `pause_ids`        | One2many  | `dnj.kiosk.pause`                              |
 | `log_ids`          | One2many  | `dnj.workorder.log`                            |
-| `duration_total`   | Float     | computed (minutes)                             |
-| `duration_net`     | Float     | computed (total minus pauses)                  |
+| `duration_total`   | Float     | computed — login → logout (minutes)            |
+| `work_duration`    | Float     | computed — START → STOP wall-clock (minutes)   |
+| `duration_net`     | Float     | computed — work_duration minus pause time      |
+| `duration_pause`   | Float     | computed — total pause time (minutes)          |
+
+**Timer semantics:**
+- `work_duration` = wall-clock from START to STOP, **including pauses** (what the operator sees on screen)
+- `duration_net` = pure productive time = `work_duration - duration_pause`
+- `duration_total` = full login session time
 
 **Lifecycle methods:** `action_start_test_print(qty)`, `action_confirm_machine()`, `action_start_work()`, `action_pause(reason)`, `action_resume()`, `action_stop_work(qty_produced, qty_scrap)`, `action_logout()`.
 
@@ -179,7 +187,8 @@ Response: { "success": true, "operator_id": 7, "name": "Jan Kowalski" }
 Request:  { "operator_id": 7, "workcenter_id": 3 }
 Response: { "session_id": 42, "state": "active" }
 ```
-Closes any existing non-done sessions for the same operator+workcenter.
+Closes **all** non-done sessions for the workcenter (any operator) before creating the new one.
+This prevents ghost sessions appearing on the dashboard.
 
 ---
 
@@ -204,7 +213,7 @@ Response: { "found": true, "state": "progress",
             "qty_produced": 200, "qty_scrap": 1 }
           { "found": false }
 ```
-Used by kiosk `_tryRestoreSession()` on page load.
+Used by kiosk `_tryRestoreSession()` on page load. `work_start_time` is used to reconstruct the wall-clock timer anchor (`workStartTs`).
 
 ---
 
@@ -252,6 +261,33 @@ Response: [
 ]
 ```
 `session` is `null` when idle. `machine_status.monitored` is `false` when no IP configured.
+Refreshed every 30 s by the dashboard frontend.
+
+---
+
+### `POST /dnj_shopfloor/machine/stats`
+Called when manager clicks a machine card in the dashboard.
+```json
+Request:  { "workcenter_id": 3 }
+Response: {
+  "today": {
+    "session_count": 3,
+    "qty_produced": 2450,
+    "qty_scrap": 12,
+    "work_minutes": 320.5,
+    "pause_minutes": 45.0
+  },
+  "operators_7d": [
+    { "name": "Jan Kowalski", "sessions": 5, "produced": 3200 }
+  ],
+  "recent_sessions": [
+    { "id": 42, "start_time": "25.03 08:00", "operator": "Jan Kowalski",
+      "workorder": "WO/00011", "product": "Ulotka A4",
+      "state": "done", "qty_produced": 820, "qty_scrap": 3, "work_min": 95 }
+  ]
+}
+```
+Aggregates today's sessions (including any live session), operators active in last 7 days, and last 10 sessions.
 
 ---
 
@@ -359,7 +395,14 @@ Template: `static/src/xml/kiosk_template.xml`
 
 **Components:** `WorkcenterSelector`, `PinScreen`, `WorkOrderQueue`, `TestPrintScreen`, `WorkScreen`, `PauseModal`
 
-**Timer persistence** — on every state change the session is saved to `localStorage` key `dnj_kiosk_session`. On startup `_tryRestoreSession()` polls `/session/status` and reconstructs state (including elapsed timer) without operator re-login.
+**Timer mechanism** — `workStartTs` (JS timestamp in ms) is set when operator presses START. A `tick` counter increments every second. The `get timerSec()` getter computes `(Date.now() - workStartTs) / 1000` on every tick. This means:
+- The timer is always accurate wall-clock time from START
+- Pressing PAUSE only changes `sessionState` — `workStartTs` and `tick` are unaffected
+- The timer physically cannot stop or freeze during a pause
+
+**Session restore** — on page load `_tryRestoreSession()` polls `/session/status`. If session is in `progress` or `paused` state, `workStartTs` is reconstructed from `work_start_time` returned by the server. The timer resumes seamlessly from the correct elapsed value.
+
+**Session persistence** — current session (sessionId, workcenter, operator, workorder) is saved to `localStorage` key `dnj_kiosk_session` on every state change.
 
 **Time bar** — motivational progress bar in WorkScreen:
 - Width = `timerSec / (duration_expected * 60) * 100%`
@@ -371,10 +414,18 @@ Template: `static/src/xml/kiosk_template.xml`
 Root: `DnjShopfloorDashboard` → action `dnj_shopfloor_dashboard_action`
 Template: `static/src/xml/dashboard_template.xml`
 
-- Polls `/dashboard` every 30 s
-- 1 s tick drives live timers in `MachineCard`
-- Shows network dot (green/red) + ping ms per machine
-- Shows Modbus data (running/speed/counter) when `modbus_enabled` and `online`
+**Components:** `MachineCard`, `MachineDetailPanel`
+
+**Machine grid** — polls `/dashboard` every 30 s. Cards show live session state, operator, progress, and Modbus data. Idle cards show "Maszyna wolna" with a hint to click.
+
+**Machine detail panel** — clicking any card opens a slide-in panel (460 px wide). Shows:
+- **Aktualnie** — current session: operator, WO, product, big wall-clock timer, net/pause breakdown, time bar, qty progress, scrap
+- **Dziś** — today's aggregate: session count, qty produced, scrap, work time, pause time
+- **Operatorzy (7 dni)** — list of operators who worked on this machine in the last 7 days with session count and produced qty
+- **Maszyna** — network status (online/offline, ping ms), Modbus data (running/speed/counter), placeholder rows for paper and ink
+- **Ostatnie sesje** — last 10 sessions with operator, WO, state badge, qty, work duration
+
+**Timer** — `elapsedSec(work_start)` computed from actual timestamp on each 1 s tick. Pause does not stop the counter.
 
 ---
 
@@ -408,6 +459,7 @@ hashlib.sha256("1234".encode()).hexdigest()
 ```bash
 # JS/XML only (no model changes):
 git pull && docker compose restart web
+# + hard-refresh in browser (Ctrl+Shift+R)
 
 # Model or view changes:
 docker compose stop web
@@ -424,7 +476,7 @@ cd machine_bridge && docker compose up -d --build
 ## Brand tokens
 
 | Token   | Hex       | Usage                       |
-|---------|-----------|-----------------------------|
+|---------|-----------|------------------------------|
 | Gold    | `#C9A227` | Accent, headers, badges     |
 | Green   | `#2D5C2D` | Active/progress state       |
 | Dark BG | `#111209` | Page background             |
