@@ -1,15 +1,12 @@
-# DNJ Shop Floor — Odoo 17 Module
+# 🏭 DNJ Shop Floor Kiosk for Odoo 17
 
 ![Odoo Version](https://img.shields.io/badge/Odoo-17.0%20Community-purple)
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
-![Frontend](https://img.shields.io/badge/Frontend-OWL%20(Odoo%20Web%20Library)-informational)
-![Protocol](https://img.shields.io/badge/Protocol-Modbus%20TCP-darkgreen)
-![Docker](https://img.shields.io/badge/Deploy-Docker%20Compose-2496ED)
-![Status](https://img.shields.io/badge/Status-Production-brightgreen)
+![Modbus](https://img.shields.io/badge/Modbus-TCP%20Bridge-red)
+![License](https://img.shields.io/badge/License-LGPL--3.0-green.svg)
+![Status](https://img.shields.io/badge/Status-Active%20Development-orange)
 
-**Developed by [Fayna Digital](https://fayna.agency) for Drukarnia DNJ, Jarocin, Poland**  
-**Author: Volodymyr Shevchenko**  
-**Demo:** [dnj.fayna.agency](https://dnj.fayna.agency) — login: `manager` / `Manager2024!`
+**Developed by [Fayna Digital](https://fayna.agency) for DNJ — Author: Volodymyr Shevchenko**
 
 ---
 
