@@ -1,3 +1,7 @@
 
 # Internal — not for public
 MEMORY.md
+
+# Python cache artifacts
+__pycache__/
+*.pyc
