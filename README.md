@@ -94,7 +94,13 @@ docker compose restart web
 
 Відкрити на планшеті: `http://<server>/kiosk`
 
-Автологін як `kiosk`, перенаправляє на кіоск.
+Автологін як спільний користувач `kiosk`, перенаправляє на кіоск.
+
+> ⚠️ **Безпека:** `/kiosk` — це `GET`, `auth='none'` (без пароля користувача). Авто-логін бере логін/пароль зі `ir.config_parameter`:
+> - `dnj_shopfloor.kiosk_login` (дефолт `kiosk`)
+> - `dnj_shopfloor.kiosk_password` (дефолт **`Kiosk2024`**)
+>
+> **Обов'язково змініть `Kiosk2024` при розгортанні на прод** — інакше будь-хто, хто знає URL, увійде в Odoo під кіоск-акаунтом.
 
 ### 4. Дашборд для менеджера
 
@@ -143,7 +149,7 @@ ping 192.168.1.100
 
 ```bash
 # Запустити симулятор (для тестів без реальної машини):
-cd Fayna-Projects/demo-industrial-iot
+cd ../demo-industrial-iot   # сусідній репозиторій поруч із dnj-shopfloor
 python plc_simulator.py    # Modbus сервер на 127.0.0.1:5020
 
 # Відкрити Odoo, вказати IP=127.0.0.1, Port=5020, Modbus=☑
@@ -205,21 +211,23 @@ docker compose up -d --build
 
 ## API ендпоінти
 
-Всі ендпоінти: `POST`, `Content-Type: application/json`, `auth='user'`.
+Це **Odoo JSON-RPC** (`type='json'`), а не «чистий REST»: відповідь завжди `200 OK` з обгорткою `{"result": …}`, а прикладні помилки повертаються в `result` як `{"success": false, "error": …}`. Ідентифікатори — цілі id Odoo (не UUID), автентифікація — сесія Odoo (cookie `session_id`), не JWT.
 
-| URL | Призначення |
-|---|---|
-| `GET /kiosk` | Авто-вхід планшету |
-| `POST /dnj_shopfloor/authenticate` | Перевірка PIN оператора |
-| `POST /dnj_shopfloor/session/open` | Відкрити сесію (закриває всі попередні сесії на машині) |
-| `POST /dnj_shopfloor/session/action` | Дії: start, pause, resume, stop, logout |
-| `POST /dnj_shopfloor/session/status` | Поточний стан сесії |
-| `POST /dnj_shopfloor/workorders` | Список Work Orders для машини |
-| `POST /dnj_shopfloor/workcenters` | Список усіх активних машин |
-| `POST /dnj_shopfloor/dashboard` | Живий статус всіх машин (для дашборду) |
-| `POST /dnj_shopfloor/machine/config` | Список машин з IP для bridge |
-| `POST /dnj_shopfloor/machine/heartbeat` | Bridge надсилає результати пінгів |
-| `POST /dnj_shopfloor/machine/stats` | Детальна статистика машини (для панелі деталей) |
+**Виняток:** `GET /kiosk` — це `type='http'`, `auth='none'`, метод `GET` (авто-логін планшету без пароля користувача). Решта ендпоінтів нижче — `POST`, `Content-Type: application/json`, `auth='user'` (потрібна активна сесія Odoo).
+
+| URL | Метод / auth | Призначення |
+|---|---|---|
+| `/kiosk` | `GET`, `auth='none'` | Авто-вхід планшету (дефолтний пароль `Kiosk2024`, див. вище) |
+| `/dnj_shopfloor/authenticate` | `POST`, `auth='user'` | Перевірка PIN оператора (повертає `operator_id`+`name`, не токен) |
+| `/dnj_shopfloor/session/open` | `POST`, `auth='user'` | Відкрити сесію (закриває всі попередні сесії на машині) |
+| `/dnj_shopfloor/session/action` | `POST`, `auth='user'` | Дії: test_print, confirm_machine, select_workorder, start_work, pause, resume, stop, logout |
+| `/dnj_shopfloor/session/status` | `POST`, `auth='user'` | Поточний стан сесії (read-only полінг) |
+| `/dnj_shopfloor/workorders` | `POST`, `auth='user'` | Список Work Orders для машини (read-only) |
+| `/dnj_shopfloor/workcenters` | `POST`, `auth='user'` | Список усіх активних машин (read-only) |
+| `/dnj_shopfloor/dashboard` | `POST`, `auth='user'` | Живий статус всіх машин (для дашборду) |
+| `/dnj_shopfloor/machine/config` | `POST`, `auth='user'` | Список машин з IP для bridge (read-only) |
+| `/dnj_shopfloor/machine/heartbeat` | `POST`, `auth='user'` | Bridge надсилає результати пінгів |
+| `/dnj_shopfloor/machine/stats` | `POST`, `auth='user'` | Детальна статистика машини (read-only, для панелі деталей) |
 
 Детально: [addons/dnj_shopfloor/TECHNICAL.md](addons/dnj_shopfloor/TECHNICAL.md)
 

@@ -4,6 +4,24 @@
 
 ---
 
+## [2026-07-05]
+
+- Docs: аудит ТЗ 2026-07-03 (`docs/tz-audit/2026-07-03/` — audit/improve/metrics) + оновлення `docs/TZ.md` за результатами (ISO/IEC/IEEE 29148 + EARS + MoSCoW)
+- Docs: §2.6 API приведено до фактичного контракту (Odoo JSON-RPC / session-auth / integer id), а не REST/JWT/UUID; §8 доповнено фактами безпеки (PIN SHA-256 без солі/lockout; кіоск `/kiosk` `auth='none'` + дефолтний пароль `Kiosk2024`)
+
+## [2026-04-09]
+
+- Chore: update `.gitignore`
+
+## [2026-04-05]
+
+- Chore: add full LGPL-3.0 `LICENSE` (replaces truncated text)
+- Docs: update README to Fayna Digital badge standard
+
+## [2026-04-04]
+
+- Docs: add `docs/TZ.md` (technical spec) and `CHANGELOG.md` (history)
+
 ## [2026-04-03]
 
 - Docs: professional badges — Odoo, Python, OWL, Modbus TCP, Docker, Status, demo link
